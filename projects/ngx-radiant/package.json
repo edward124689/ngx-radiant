@@ -1,7 +1,7 @@
 {
   "name": "ngx-radiant",
-  "version": "21.0.0",
-  "description": "Angular 21+ lightbox gallery library with directive triggers, image zoom, thumbnails, captions, video, and iframe/YouTube embeds.",
+  "version": "21.1.0",
+  "description": "Angular 21+ lightbox gallery library with mobile gestures, image zoom, lazy thumbnails, preloading, video, and iframe/YouTube embeds.",
   "keywords": [
     "angular",
     "angular-21-plus",
@@ -20,7 +20,11 @@
     "youtube",
     "video",
     "directive",
-    "standalone-components"
+    "standalone-components",
+    "swipe",
+    "pinch-zoom",
+    "lazy-loading",
+    "preload"
   ],
   "author": "Edward",
   "license": "MIT",

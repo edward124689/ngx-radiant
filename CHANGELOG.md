@@ -2,6 +2,15 @@
 
 All notable changes to Ngx Radiant are documented in this file.
 
+## 21.1.0 - 2026-06-28
+
+### Added
+
+- Mobile horizontal swipe navigation for image galleries.
+- Pinch zoom and mobile double-tap zoom for image items.
+- Lazy-loaded thumbnail images and configurable nearby image preloading.
+- New config options: `swipeNavigation`, `swipeThreshold`, `pinchZoom`, `doubleTapZoom`, `lazyLoad`, `preloadImages`, and `preloadRadius`.
+
 ## 21.0.0 - 2026-06-28
 
 ### Added

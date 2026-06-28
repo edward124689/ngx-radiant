@@ -36,6 +36,13 @@ export interface NgxRadiantConfig {
   maxZoom?: number;
   zoomStep?: number;
   showZoomSlider?: boolean;
+  swipeNavigation?: boolean;
+  swipeThreshold?: number;
+  pinchZoom?: boolean;
+  doubleTapZoom?: boolean;
+  lazyLoad?: boolean;
+  preloadImages?: boolean;
+  preloadRadius?: number;
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;
@@ -55,6 +62,13 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   maxZoom: 3,
   zoomStep: 0.25,
   showZoomSlider: false,
+  swipeNavigation: true,
+  swipeThreshold: 48,
+  pinchZoom: true,
+  doubleTapZoom: true,
+  lazyLoad: true,
+  preloadImages: true,
+  preloadRadius: 1,
   iframeAspectRatio: '16 / 9',
   iframeAutoplay: false,
   iframeMuted: false,
@@ -131,7 +145,14 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
             </button>
           }
 
-          <figure class="ngx-radiant__stage">
+          <figure
+            class="ngx-radiant__stage"
+            (pointerdown)="startGesture($event)"
+            (pointermove)="moveGesture($event)"
+            (pointerup)="endGesture($event)"
+            (pointercancel)="endGesture($event)"
+            (lostpointercapture)="endGesture($event)"
+          >
             @switch (currentItem().type ?? 'image') {
               @case ('video') {
                 <video class="ngx-radiant__media" [src]="currentItem().src" controls playsinline></video>
@@ -155,6 +176,8 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                   [class.ngx-radiant__media--dragging]="dragging()"
                   [src]="currentItem().src"
                   [alt]="currentItem().alt ?? currentItem().caption ?? ''"
+                  [attr.loading]="mainImageLoading()"
+                  decoding="async"
                   draggable="false"
                   (dblclick)="toggleZoom()"
                   (pointerdown)="startPan($event)"
@@ -193,7 +216,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                   [attr.aria-current]="index === currentIndex() ? 'true' : null"
                   (click)="goTo(index)"
                 >
-                  <img [src]="item.thumb ?? item.src" [alt]="item.alt ?? ''" />
+                  <img [src]="item.thumb ?? item.src" [alt]="item.alt ?? ''" [attr.loading]="thumbnailLoading()" decoding="async" />
                 </button>
               }
             </footer>
@@ -353,6 +376,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
       min-width: 0;
       min-height: 0;
       margin: 0;
+      touch-action: pan-y pinch-zoom;
     }
 
     .ngx-radiant__media,
@@ -494,6 +518,13 @@ export class NgxRadiantLightbox {
   readonly maxZoom = input<number | undefined>(undefined);
   readonly zoomStep = input<number | undefined>(undefined);
   readonly showZoomSlider = input<boolean | undefined>(undefined);
+  readonly swipeNavigation = input<boolean | undefined>(undefined);
+  readonly swipeThreshold = input<number | undefined>(undefined);
+  readonly pinchZoom = input<boolean | undefined>(undefined);
+  readonly doubleTapZoom = input<boolean | undefined>(undefined);
+  readonly lazyLoad = input<boolean | undefined>(undefined);
+  readonly preloadImages = input<boolean | undefined>(undefined);
+  readonly preloadRadius = input<number | undefined>(undefined);
   readonly iframeAspectRatio = input<string | undefined>(undefined);
   readonly iframeAutoplay = input<boolean | undefined>(undefined);
   readonly iframeMuted = input<boolean | undefined>(undefined);
@@ -513,6 +544,11 @@ export class NgxRadiantLightbox {
   protected readonly panY = signal(0);
   protected readonly dragging = signal(false);
   private dragStart: { pointerId: number; x: number; y: number; panX: number; panY: number } | null = null;
+  private gestureStart: { pointerId: number; x: number; y: number; time: number } | null = null;
+  private readonly activePointers = new Map<number, { x: number; y: number }>();
+  private pinchStart: { distance: number; zoom: number } | null = null;
+  private lastTap: { time: number; x: number; y: number } | null = null;
+  private readonly preloadedImages = new Set<string>();
 
   private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
     const config = this.config() ?? {};
@@ -531,6 +567,13 @@ export class NgxRadiantLightbox {
       maxZoom: this.maxZoom() ?? config.maxZoom ?? NGX_RADIANT_DEFAULT_CONFIG.maxZoom,
       zoomStep: this.zoomStep() ?? config.zoomStep ?? NGX_RADIANT_DEFAULT_CONFIG.zoomStep,
       showZoomSlider: this.showZoomSlider() ?? config.showZoomSlider ?? NGX_RADIANT_DEFAULT_CONFIG.showZoomSlider,
+      swipeNavigation: this.swipeNavigation() ?? config.swipeNavigation ?? NGX_RADIANT_DEFAULT_CONFIG.swipeNavigation,
+      swipeThreshold: this.swipeThreshold() ?? config.swipeThreshold ?? NGX_RADIANT_DEFAULT_CONFIG.swipeThreshold,
+      pinchZoom: this.pinchZoom() ?? config.pinchZoom ?? NGX_RADIANT_DEFAULT_CONFIG.pinchZoom,
+      doubleTapZoom: this.doubleTapZoom() ?? config.doubleTapZoom ?? NGX_RADIANT_DEFAULT_CONFIG.doubleTapZoom,
+      lazyLoad: this.lazyLoad() ?? config.lazyLoad ?? NGX_RADIANT_DEFAULT_CONFIG.lazyLoad,
+      preloadImages: this.preloadImages() ?? config.preloadImages ?? NGX_RADIANT_DEFAULT_CONFIG.preloadImages,
+      preloadRadius: this.preloadRadius() ?? config.preloadRadius ?? NGX_RADIANT_DEFAULT_CONFIG.preloadRadius,
       iframeAspectRatio: this.iframeAspectRatio() ?? config.iframeAspectRatio ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAspectRatio,
       iframeAutoplay: this.iframeAutoplay() ?? config.iframeAutoplay ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAutoplay,
       iframeMuted: this.iframeMuted() ?? config.iframeMuted ?? NGX_RADIANT_DEFAULT_CONFIG.iframeMuted,
@@ -559,6 +602,8 @@ export class NgxRadiantLightbox {
   protected readonly showCounterControl = computed(() => this.resolvedConfig().showCounter);
   protected readonly showNavigationControl = computed(() => this.resolvedConfig().showNavigation);
   protected readonly showZoomSliderControl = computed(() => this.resolvedConfig().showZoomSlider);
+  protected readonly mainImageLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'eager' : null));
+  protected readonly thumbnailLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'lazy' : 'eager'));
 
   constructor() {
     effect(() => {
@@ -568,6 +613,7 @@ export class NgxRadiantLightbox {
       const config = this.resolvedConfig();
       this.zoomLevel.set(this.clampZoom(config.initialZoom));
       this.resetPan();
+      this.preloadNearbyImages();
     });
   }
 
@@ -657,7 +703,8 @@ export class NgxRadiantLightbox {
     }
 
     event.preventDefault();
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    event.stopPropagation();
+    this.capturePointer(event.currentTarget as HTMLElement, event.pointerId);
     this.dragStart = {
       pointerId: event.pointerId,
       x: event.clientX,
@@ -674,6 +721,7 @@ export class NgxRadiantLightbox {
     }
 
     event.preventDefault();
+    event.stopPropagation();
     const bounds = this.getPanBounds(event.currentTarget as HTMLElement);
     this.panX.set(this.clamp(this.dragStart.panX + event.clientX - this.dragStart.x, -bounds.x, bounds.x));
     this.panY.set(this.clamp(this.dragStart.panY + event.clientY - this.dragStart.y, -bounds.y, bounds.y));
@@ -683,6 +731,79 @@ export class NgxRadiantLightbox {
     if (this.dragStart?.pointerId === event.pointerId) {
       this.dragStart = null;
       this.dragging.set(false);
+    }
+  }
+
+  startGesture(event: PointerEvent): void {
+    if (!this.isImageGestureEnabled()) {
+      return;
+    }
+
+    const target = event.currentTarget as HTMLElement;
+    this.capturePointer(target, event.pointerId);
+    this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (this.activePointers.size === 1) {
+      this.gestureStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, time: Date.now() };
+      this.pinchStart = null;
+      return;
+    }
+
+    if (this.resolvedConfig().pinchZoom && this.activePointers.size === 2) {
+      this.pinchStart = { distance: this.currentPointerDistance(), zoom: this.zoomLevel() };
+      this.gestureStart = null;
+      event.preventDefault();
+    }
+  }
+
+  moveGesture(event: PointerEvent): void {
+    if (!this.activePointers.has(event.pointerId)) {
+      return;
+    }
+
+    this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (!this.pinchStart || !this.resolvedConfig().pinchZoom || this.activePointers.size < 2) {
+      return;
+    }
+
+    const distance = this.currentPointerDistance();
+    if (this.pinchStart.distance <= 0 || distance <= 0) {
+      return;
+    }
+
+    event.preventDefault();
+    this.setZoom(this.pinchStart.zoom * (distance / this.pinchStart.distance));
+  }
+
+  endGesture(event: PointerEvent): void {
+    if (!this.activePointers.has(event.pointerId)) {
+      return;
+    }
+
+    const start = this.gestureStart;
+    this.activePointers.delete(event.pointerId);
+
+    if (this.activePointers.size < 2) {
+      this.pinchStart = null;
+    }
+
+    if (!start || start.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+    this.gestureStart = null;
+
+    if (this.handleSwipe(dx, dy)) {
+      event.preventDefault();
+      return;
+    }
+
+    if (event.pointerType !== 'mouse' && elapsed < 320 && Math.hypot(dx, dy) < 12) {
+      this.handleDoubleTap(event);
     }
   }
 
@@ -720,6 +841,98 @@ export class NgxRadiantLightbox {
     if (event.key === '0') {
       event.preventDefault();
       this.resetZoom();
+    }
+  }
+
+  private handleSwipe(dx: number, dy: number): boolean {
+    const threshold = Math.max(this.resolvedConfig().swipeThreshold, 1);
+    if (!this.resolvedConfig().swipeNavigation || !this.canNavigate() || this.zoomLevel() > this.resolvedMinZoom()) {
+      return false;
+    }
+
+    if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.25) {
+      return false;
+    }
+
+    if (dx < 0) {
+      this.next();
+    } else {
+      this.previous();
+    }
+    return true;
+  }
+
+  private handleDoubleTap(event: PointerEvent): void {
+    if (!this.resolvedConfig().doubleTapZoom || !this.canZoom()) {
+      return;
+    }
+
+    const now = Date.now();
+    const previousTap = this.lastTap;
+    this.lastTap = { time: now, x: event.clientX, y: event.clientY };
+    if (!previousTap || now - previousTap.time > 300) {
+      return;
+    }
+
+    if (Math.hypot(event.clientX - previousTap.x, event.clientY - previousTap.y) > 32) {
+      return;
+    }
+
+    event.preventDefault();
+    this.toggleZoom();
+    this.lastTap = null;
+  }
+
+  private currentPointerDistance(): number {
+    const [first, second] = Array.from(this.activePointers.values());
+    if (!first || !second) {
+      return 0;
+    }
+
+    return Math.hypot(second.x - first.x, second.y - first.y);
+  }
+
+  private capturePointer(target: HTMLElement, pointerId: number): void {
+    try {
+      target.setPointerCapture?.(pointerId);
+    } catch {
+      // Synthetic PointerEvents can miss the browser's active-pointer bookkeeping.
+      // Gesture state still works without capture; real touches use capture when available.
+    }
+  }
+
+  private isImageGestureEnabled(): boolean {
+    return this.open() && (this.currentItem().type ?? 'image') === 'image';
+  }
+
+  private preloadNearbyImages(): void {
+    if (!this.open() || !this.resolvedConfig().preloadImages || typeof Image === 'undefined') {
+      return;
+    }
+
+    const items = this.items();
+    if (items.length < 2) {
+      return;
+    }
+
+    const radius = Math.max(Math.trunc(this.resolvedConfig().preloadRadius), 0);
+    for (let offset = -radius; offset <= radius; offset += 1) {
+      if (offset === 0) {
+        continue;
+      }
+
+      const index = this.resolvedConfig().loop
+        ? (this.currentIndex() + offset + items.length) % items.length
+        : this.currentIndex() + offset;
+      const item = items[index];
+      if (!item || (item.type ?? 'image') !== 'image' || this.preloadedImages.has(item.src)) {
+        continue;
+      }
+
+      const image = new Image();
+      image.decoding = 'async';
+      image.src = item.src;
+      this.preloadedImages.add(item.src);
     }
   }
 
@@ -815,6 +1028,9 @@ export class NgxRadiantLightbox {
     this.panX.set(0);
     this.panY.set(0);
     this.dragStart = null;
+    this.gestureStart = null;
+    this.pinchStart = null;
+    this.activePointers.clear();
     this.dragging.set(false);
   }
 }

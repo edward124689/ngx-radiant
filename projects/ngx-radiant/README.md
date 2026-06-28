@@ -6,6 +6,10 @@
 
 Angular 21+ lightbox gallery library with directive triggers, image zoom, thumbnails, captions, keyboard navigation, video previews, and iframe/YouTube embeds.
 
+## Mobile and performance defaults
+
+Ngx Radiant enables swipe navigation, pinch zoom, double-tap zoom, lazy thumbnail loading, and nearby image preloading by default. Disable or tune them through `NgxRadiantConfig` when an app needs stricter behavior.
+
 ## Demo
 
 ```text
@@ -20,7 +24,7 @@ npm install ngx-radiant
 
 ## Compatibility
 
-- Library version: `21.0.0`
+- Library version: `21.1.0`
 - Angular compatibility: `21+`
 
 ## Component usage
@@ -53,6 +57,9 @@ export class GalleryComponent {
     maxZoom: 8,
     showZoomSlider: true,
     showThumbnails: true,
+    swipeNavigation: true,
+    pinchZoom: true,
+    preloadImages: true,
   };
 
   readonly items: NgxRadiantItem[] = [
@@ -93,7 +100,7 @@ export class GalleryComponent {
 }
 ```
 
-Images can zoom beyond the fitted viewport. When zoomed in, users can drag the image to inspect details.
+Images can zoom beyond the fitted viewport. When zoomed in, users can drag the image to inspect details. On touch devices, users can swipe between gallery items, pinch to zoom, and double-tap image items to jump between min/max zoom.
 
 Single-image shorthand automatically hides the counter and previous/next controls:
 
@@ -155,6 +162,13 @@ readonly mediaItems: NgxRadiantItem[] = [
 | `maxZoom` | `number` | `3` | Maximum image zoom level. Overrides `config.maxZoom`. |
 | `zoomStep` | `number` | `0.25` | Amount changed by each zoom in/out action. Overrides `config.zoomStep`. |
 | `showZoomSlider` | `boolean` | `false` | Render a range slider for direct zoom control. Overrides `config.showZoomSlider`. |
+| `swipeNavigation` | `boolean` | `true` | Enable horizontal swipe navigation on image galleries. Overrides `config.swipeNavigation`. |
+| `swipeThreshold` | `number` | `48` | Minimum horizontal swipe distance in pixels. Overrides `config.swipeThreshold`. |
+| `pinchZoom` | `boolean` | `true` | Enable two-finger pinch zoom on image items. Overrides `config.pinchZoom`. |
+| `doubleTapZoom` | `boolean` | `true` | Enable mobile double-tap zoom toggling on image items. Overrides `config.doubleTapZoom`. |
+| `lazyLoad` | `boolean` | `true` | Lazy-load thumbnails and mark the active image as eager. Overrides `config.lazyLoad`. |
+| `preloadImages` | `boolean` | `true` | Preload nearby image items for faster navigation. Overrides `config.preloadImages`. |
+| `preloadRadius` | `number` | `1` | Number of previous/next image items to preload. Overrides `config.preloadRadius`. |
 | `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe embeds. Overrides `config.iframeAspectRatio`. |
 | `iframeAutoplay` | `boolean` | `false` | Appends `autoplay=1` to iframe URLs. Overrides `config.iframeAutoplay`. |
 | `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` only when explicitly enabled. Overrides `config.iframeMuted`. |
@@ -193,6 +207,13 @@ interface NgxRadiantConfig {
   maxZoom?: number;
   zoomStep?: number;
   showZoomSlider?: boolean;
+  swipeNavigation?: boolean;
+  swipeThreshold?: number;
+  pinchZoom?: boolean;
+  doubleTapZoom?: boolean;
+  lazyLoad?: boolean;
+  preloadImages?: boolean;
+  preloadRadius?: number;
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;

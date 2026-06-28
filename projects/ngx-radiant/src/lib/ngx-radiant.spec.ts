@@ -154,6 +154,81 @@ describe('NgxRadiantLightbox', () => {
     expect(image.style.transform).toBe('translate(300px, 250px) scale(3)');
   });
 
+
+  it('navigates with horizontal swipe gestures when not zoomed', () => {
+    const emittedIndexes: number[] = [];
+    component.indexChange.subscribe((index) => emittedIndexes.push(index));
+    fixture.detectChanges();
+
+    const stage = fixture.nativeElement.querySelector('.ngx-radiant__stage') as HTMLElement;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 11, pointerType: 'touch', clientX: 220, clientY: 100, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 11, pointerType: 'touch', clientX: 120, clientY: 108, bubbles: true }));
+    fixture.detectChanges();
+
+    expect(emittedIndexes.at(-1)).toBe(1);
+  });
+
+  it('supports pinch zoom gestures on image items', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('config', { maxZoom: 4 });
+    fixture.detectChanges();
+
+    const stage = fixture.nativeElement.querySelector('.ngx-radiant__stage') as HTMLElement;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', clientX: 0, clientY: 0, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 2, pointerType: 'touch', clientX: 100, clientY: 0, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointermove', { pointerId: 2, pointerType: 'touch', clientX: 200, clientY: 0, bubbles: true }));
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(image.style.transform).toBe('translate(0px, 0px) scale(2)');
+  });
+
+  it('toggles zoom on mobile double tap', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('config', { maxZoom: 4 });
+    fixture.detectChanges();
+
+    const stage = fixture.nativeElement.querySelector('.ngx-radiant__stage') as HTMLElement;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 21, pointerType: 'touch', clientX: 150, clientY: 100, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 21, pointerType: 'touch', clientX: 150, clientY: 100, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 22, pointerType: 'touch', clientX: 154, clientY: 102, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 22, pointerType: 'touch', clientX: 154, clientY: 102, bubbles: true }));
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(image.style.transform).toBe('translate(0px, 0px) scale(4)');
+  });
+
+  it('lazy-loads thumbnails and preloads nearby image items', () => {
+    const originalImage = globalThis.Image;
+    const preloaded: string[] = [];
+    class MockImage {
+      decoding = 'auto';
+      set src(value: string) {
+        preloaded.push(value);
+      }
+    }
+    Object.defineProperty(globalThis, 'Image', { configurable: true, value: MockImage });
+
+    try {
+      fixture.componentRef.setInput('items', [
+        { src: '/assets/lazy-1.jpg', alt: 'First photo' },
+        { src: '/assets/lazy-2.jpg', alt: 'Second photo' },
+        { src: '/assets/lazy-3.jpg', alt: 'Third photo' },
+      ]);
+      fixture.componentRef.setInput('config', { loop: false, preloadRadius: 1 });
+      fixture.componentRef.setInput('index', 0);
+      fixture.detectChanges();
+
+      const thumbs = Array.from(fixture.nativeElement.querySelectorAll('.ngx-radiant__thumb img')) as HTMLImageElement[];
+      expect(thumbs.every((thumb) => thumb.getAttribute('loading') === 'lazy')).toBe(true);
+      expect(preloaded).toContain('/assets/lazy-2.jpg');
+      expect(preloaded).not.toContain('/assets/lazy-3.jpg');
+    } finally {
+      Object.defineProperty(globalThis, 'Image', { configurable: true, value: originalImage });
+    }
+  });
+
   it('supports config-driven UI options', () => {
     fixture.componentRef.setInput('config', {
       showCounter: false,
