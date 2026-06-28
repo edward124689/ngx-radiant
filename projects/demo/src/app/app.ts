@@ -13,6 +13,10 @@ export class App {
     zoomStep: 0.5,
     maxZoom: 8,
     showThumbnails: true,
+    showZoomSlider: true,
+    showFullscreenButton: true,
+    showDownload: true,
+    showOpenOriginal: true,
   };
 
   protected readonly iframeItems: NgxRadiantItem[] = [
@@ -30,18 +34,21 @@ export class App {
       thumb: 'demo-art/aurora-landscape.png',
       alt: 'Aurora lights reflected over an alpine mountain lake',
       caption: 'Aurora Lake — cinematic landscape preview with caption and thumbnails.',
+      downloadName: 'aurora-lake.png',
     },
     {
       src: 'demo-art/canyon-prism.png',
       thumb: 'demo-art/canyon-prism.png',
       alt: 'Golden desert canyon with radiant light beams',
       caption: 'Radiant Canyon — gallery navigation, keyboard arrows, and looped browsing.',
+      downloadName: 'radiant-canyon.png',
     },
     {
       src: 'demo-art/bioluminescent-coast.png',
       thumb: 'demo-art/bioluminescent-coast.png',
       alt: 'Bioluminescent waves glowing on a moonlit coast',
       caption: 'Bioluminescent Coast — responsive overlay designed for Angular apps.',
+      downloadName: 'bioluminescent-coast.png',
     },
   ];
 }

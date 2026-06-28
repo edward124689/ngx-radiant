@@ -250,6 +250,102 @@ describe('NgxRadiantLightbox', () => {
     }
   });
 
+
+  it('renders configured toolbar actions without forcing a version bump', () => {
+    fixture.componentRef.setInput('config', {
+      zoomable: false,
+      showDownload: true,
+      showOpenOriginal: true,
+      fullscreen: false,
+      toolbarActions: ['download', 'openOriginal', 'close'],
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[aria-label="Download current item"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[aria-label="Open original in new tab"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[aria-label="Zoom in"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Enter fullscreen"]')).toBeNull();
+  });
+
+  it('supports download and open-original toolbar actions', () => {
+    fixture.componentRef.setInput('items', [
+      { src: '/assets/export-photo.jpg', alt: 'Export photo', downloadName: 'custom-photo.jpg' },
+    ]);
+    fixture.componentRef.setInput('config', { showDownload: true, showOpenOriginal: true });
+    fixture.detectChanges();
+
+    const clickedDownloads: Array<{ href: string; download: string }> = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function click() {
+      clickedDownloads.push({ href: this.getAttribute('href') ?? '', download: this.getAttribute('download') ?? '' });
+    };
+
+    const originalOpen = window.open;
+    let openedUrl = '';
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: (url?: string | URL) => {
+        openedUrl = String(url ?? '');
+        return null;
+      },
+    });
+
+    try {
+      component.downloadCurrent();
+      component.openOriginal();
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+      Object.defineProperty(window, 'open', { configurable: true, value: originalOpen });
+    }
+
+    expect(clickedDownloads).toEqual([{ href: '/assets/export-photo.jpg', download: 'custom-photo.jpg' }]);
+    expect(openedUrl).toBe('/assets/export-photo.jpg');
+  });
+
+  it('calls the Fullscreen API when fullscreen is enabled', () => {
+    let requested = 0;
+    const originalDocumentFullscreen = document.documentElement.requestFullscreen;
+    document.documentElement.requestFullscreen = () => Promise.resolve();
+
+    try {
+      fixture.componentRef.setInput('config', { fullscreen: true, showFullscreenButton: true });
+      fixture.detectChanges();
+
+      const shell = fixture.nativeElement.querySelector('.ngx-radiant__shell') as HTMLElement & {
+        requestFullscreen?: () => Promise<void>;
+      };
+      shell.requestFullscreen = () => {
+        requested += 1;
+        return Promise.resolve();
+      };
+
+      const fullscreen = fixture.nativeElement.querySelector('[aria-label="Enter fullscreen"]') as HTMLButtonElement;
+      fullscreen.click();
+    } finally {
+      document.documentElement.requestFullscreen = originalDocumentFullscreen;
+    }
+
+    expect(requested).toBe(1);
+  });
+
+  it('traps keyboard focus inside the toolbar', () => {
+    fixture.componentRef.setInput('config', { showDownload: true, showOpenOriginal: true });
+    fixture.detectChanges();
+
+    const shell = fixture.nativeElement.querySelector('.ngx-radiant__shell') as HTMLElement;
+    const buttons = Array.from(shell.querySelectorAll('button')) as HTMLButtonElement[];
+    for (const button of buttons) {
+      Object.defineProperty(button, 'offsetParent', { configurable: true, value: shell });
+    }
+
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    last.focus();
+    shell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+
+    expect(document.activeElement).toBe(first);
+  });
+
   it('supports config-driven UI options', () => {
     fixture.componentRef.setInput('config', {
       showCounter: false,

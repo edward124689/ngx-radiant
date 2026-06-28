@@ -1,4 +1,4 @@
-import { NgClass } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +14,14 @@ import {
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 export type NgxRadiantItemType = 'image' | 'video' | 'iframe';
+export type NgxRadiantToolbarAction =
+  | 'zoomOut'
+  | 'resetZoom'
+  | 'zoomIn'
+  | 'fullscreen'
+  | 'download'
+  | 'openOriginal'
+  | 'close';
 
 export interface NgxRadiantItem {
   src: string;
@@ -21,6 +29,7 @@ export interface NgxRadiantItem {
   alt?: string;
   caption?: string;
   thumb?: string;
+  downloadName?: string;
 }
 
 export interface NgxRadiantConfig {
@@ -43,6 +52,13 @@ export interface NgxRadiantConfig {
   lazyLoad?: boolean;
   preloadImages?: boolean;
   preloadRadius?: number;
+  toolbarActions?: NgxRadiantToolbarAction[];
+  fullscreen?: boolean;
+  showFullscreenButton?: boolean;
+  showDownload?: boolean;
+  showOpenOriginal?: boolean;
+  trapFocus?: boolean;
+  restoreFocus?: boolean;
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;
@@ -69,6 +85,13 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   lazyLoad: true,
   preloadImages: true,
   preloadRadius: 1,
+  toolbarActions: ['zoomOut', 'resetZoom', 'zoomIn', 'fullscreen', 'download', 'openOriginal', 'close'],
+  fullscreen: true,
+  showFullscreenButton: true,
+  showDownload: false,
+  showOpenOriginal: false,
+  trapFocus: true,
+  restoreFocus: true,
   iframeAspectRatio: '16 / 9',
   iframeAutoplay: false,
   iframeMuted: false,
@@ -92,7 +115,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
           (click)="close()"
         ></button>
 
-        <div class="ngx-radiant__shell" (keydown)="handleKeydown($event)" tabindex="-1">
+        <div #shell class="ngx-radiant__shell" (keydown)="handleKeydown($event)" tabindex="-1">
           <header class="ngx-radiant__toolbar">
             <div class="ngx-radiant__toolbar-start">
               @if (showCounterControl() && canNavigate()) {
@@ -103,13 +126,19 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
             </div>
 
             <div class="ngx-radiant__toolbar-actions">
-              @if (canZoom()) {
+              @if (canZoom() && showAnyZoomAction()) {
                 <div class="ngx-radiant__zoom-controls" aria-label="Image zoom controls">
-                  <button type="button" class="ngx-radiant__button" aria-label="Zoom out" (click)="zoomOut()">−</button>
-                  <button type="button" class="ngx-radiant__zoom-value" aria-label="Reset zoom" (click)="resetZoom()">
-                    {{ zoomPercent() }}%
-                  </button>
-                  <button type="button" class="ngx-radiant__button" aria-label="Zoom in" (click)="zoomIn()">+</button>
+                  @if (toolbarActionEnabled('zoomOut')) {
+                    <button type="button" class="ngx-radiant__button" aria-label="Zoom out" (click)="zoomOut()">−</button>
+                  }
+                  @if (toolbarActionEnabled('resetZoom')) {
+                    <button type="button" class="ngx-radiant__zoom-value" aria-label="Reset zoom" (click)="resetZoom()">
+                      {{ zoomPercent() }}%
+                    </button>
+                  }
+                  @if (toolbarActionEnabled('zoomIn')) {
+                    <button type="button" class="ngx-radiant__button" aria-label="Zoom in" (click)="zoomIn()">+</button>
+                  }
                   @if (showZoomSliderControl()) {
                     <label class="ngx-radiant__zoom-slider-label">
                       <span>Zoom</span>
@@ -128,9 +157,25 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                 </div>
               }
 
-              <button type="button" class="ngx-radiant__button" aria-label="Close" (click)="close()">
-                ×
-              </button>
+              @if (canToggleFullscreen()) {
+                <button type="button" class="ngx-radiant__button" [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'" (click)="toggleFullscreen()">
+                  {{ isFullscreen() ? '⤢' : '⛶' }}
+                </button>
+              }
+
+              @if (canDownload()) {
+                <button type="button" class="ngx-radiant__button" aria-label="Download current item" (click)="downloadCurrent()">⇩</button>
+              }
+
+              @if (canOpenOriginal()) {
+                <button type="button" class="ngx-radiant__button" aria-label="Open original in new tab" (click)="openOriginal()">↗</button>
+              }
+
+              @if (toolbarActionEnabled('close')) {
+                <button type="button" class="ngx-radiant__button" aria-label="Close" (click)="close()">
+                  ×
+                </button>
+              }
             </div>
           </header>
 
@@ -525,6 +570,13 @@ export class NgxRadiantLightbox {
   readonly lazyLoad = input<boolean | undefined>(undefined);
   readonly preloadImages = input<boolean | undefined>(undefined);
   readonly preloadRadius = input<number | undefined>(undefined);
+  readonly toolbarActions = input<NgxRadiantToolbarAction[] | undefined>(undefined);
+  readonly fullscreen = input<boolean | undefined>(undefined);
+  readonly showFullscreenButton = input<boolean | undefined>(undefined);
+  readonly showDownload = input<boolean | undefined>(undefined);
+  readonly showOpenOriginal = input<boolean | undefined>(undefined);
+  readonly trapFocus = input<boolean | undefined>(undefined);
+  readonly restoreFocus = input<boolean | undefined>(undefined);
   readonly iframeAspectRatio = input<string | undefined>(undefined);
   readonly iframeAutoplay = input<boolean | undefined>(undefined);
   readonly iframeMuted = input<boolean | undefined>(undefined);
@@ -538,17 +590,22 @@ export class NgxRadiantLightbox {
   readonly closed = output<void>();
 
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly document = inject(DOCUMENT);
   private readonly zoomMedia = viewChild<ElementRef<HTMLElement>>('zoomMedia');
+  private readonly shell = viewChild<ElementRef<HTMLElement>>('shell');
   protected readonly zoomLevel = signal(1);
   protected readonly panX = signal(0);
   protected readonly panY = signal(0);
   protected readonly dragging = signal(false);
+  protected readonly isFullscreen = signal(false);
   private dragStart: { pointerId: number; x: number; y: number; panX: number; panY: number } | null = null;
   private gestureStart: { pointerId: number; x: number; y: number; time: number } | null = null;
   private readonly activePointers = new Map<number, { x: number; y: number }>();
   private pinchStart: { distance: number; zoom: number } | null = null;
   private lastTap: { time: number; x: number; y: number } | null = null;
   private readonly preloadedImages = new Set<string>();
+  private previousFocus: HTMLElement | null = null;
+  private fullscreenListenerAttached = false;
 
   private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
     const config = this.config() ?? {};
@@ -574,6 +631,14 @@ export class NgxRadiantLightbox {
       lazyLoad: this.lazyLoad() ?? config.lazyLoad ?? NGX_RADIANT_DEFAULT_CONFIG.lazyLoad,
       preloadImages: this.preloadImages() ?? config.preloadImages ?? NGX_RADIANT_DEFAULT_CONFIG.preloadImages,
       preloadRadius: this.preloadRadius() ?? config.preloadRadius ?? NGX_RADIANT_DEFAULT_CONFIG.preloadRadius,
+      toolbarActions: this.toolbarActions() ?? config.toolbarActions ?? NGX_RADIANT_DEFAULT_CONFIG.toolbarActions,
+      fullscreen: this.fullscreen() ?? config.fullscreen ?? NGX_RADIANT_DEFAULT_CONFIG.fullscreen,
+      showFullscreenButton:
+        this.showFullscreenButton() ?? config.showFullscreenButton ?? NGX_RADIANT_DEFAULT_CONFIG.showFullscreenButton,
+      showDownload: this.showDownload() ?? config.showDownload ?? NGX_RADIANT_DEFAULT_CONFIG.showDownload,
+      showOpenOriginal: this.showOpenOriginal() ?? config.showOpenOriginal ?? NGX_RADIANT_DEFAULT_CONFIG.showOpenOriginal,
+      trapFocus: this.trapFocus() ?? config.trapFocus ?? NGX_RADIANT_DEFAULT_CONFIG.trapFocus,
+      restoreFocus: this.restoreFocus() ?? config.restoreFocus ?? NGX_RADIANT_DEFAULT_CONFIG.restoreFocus,
       iframeAspectRatio: this.iframeAspectRatio() ?? config.iframeAspectRatio ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAspectRatio,
       iframeAutoplay: this.iframeAutoplay() ?? config.iframeAutoplay ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAutoplay,
       iframeMuted: this.iframeMuted() ?? config.iframeMuted ?? NGX_RADIANT_DEFAULT_CONFIG.iframeMuted,
@@ -602,6 +667,21 @@ export class NgxRadiantLightbox {
   protected readonly showCounterControl = computed(() => this.resolvedConfig().showCounter);
   protected readonly showNavigationControl = computed(() => this.resolvedConfig().showNavigation);
   protected readonly showZoomSliderControl = computed(() => this.resolvedConfig().showZoomSlider);
+  protected readonly showAnyZoomAction = computed(() =>
+    this.toolbarActionEnabled('zoomOut') || this.toolbarActionEnabled('resetZoom') || this.toolbarActionEnabled('zoomIn'),
+  );
+  protected readonly canToggleFullscreen = computed(() =>
+    this.toolbarActionEnabled('fullscreen') &&
+    this.resolvedConfig().fullscreen &&
+    this.resolvedConfig().showFullscreenButton &&
+    this.fullscreenSupported(),
+  );
+  protected readonly canDownload = computed(() =>
+    this.toolbarActionEnabled('download') && this.resolvedConfig().showDownload && this.hasCurrentSource(),
+  );
+  protected readonly canOpenOriginal = computed(() =>
+    this.toolbarActionEnabled('openOriginal') && this.resolvedConfig().showOpenOriginal && this.hasCurrentSource(),
+  );
   protected readonly mainImageLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'eager' : null));
   protected readonly thumbnailLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'lazy' : 'eager'));
 
@@ -614,6 +694,8 @@ export class NgxRadiantLightbox {
       this.zoomLevel.set(this.clampZoom(config.initialZoom));
       this.resetPan();
       this.preloadNearbyImages();
+      this.syncDialogFocus();
+      this.attachFullscreenListener();
     });
   }
 
@@ -627,7 +709,9 @@ export class NgxRadiantLightbox {
       return;
     }
 
+    this.exitFullscreen();
     this.resetPan();
+    this.restorePreviousFocus();
     this.openChange.emit(false);
     this.closed.emit();
   }
@@ -696,6 +780,42 @@ export class NgxRadiantLightbox {
     }
 
     this.setZoom(this.zoomLevel() > this.resolvedMinZoom() ? this.resolvedMinZoom() : this.resolvedMaxZoom());
+  }
+
+  toggleFullscreen(): void {
+    if (!this.canToggleFullscreen()) {
+      return;
+    }
+
+    if (this.isFullscreen()) {
+      this.exitFullscreen();
+      return;
+    }
+
+    const target = this.shell()?.nativeElement;
+    target?.requestFullscreen?.().catch(() => undefined);
+  }
+
+  downloadCurrent(): void {
+    if (!this.canDownload()) {
+      return;
+    }
+
+    const anchor = this.document.createElement('a');
+    anchor.href = this.currentItem().src;
+    anchor.download = this.currentItem().downloadName ?? this.filenameFromSource(this.currentItem().src);
+    anchor.rel = 'noopener noreferrer';
+    this.document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+
+  openOriginal(): void {
+    if (!this.canOpenOriginal()) {
+      return;
+    }
+
+    this.document.defaultView?.open(this.currentItem().src, '_blank', 'noopener,noreferrer');
   }
 
   startPan(event: PointerEvent): void {
@@ -811,6 +931,11 @@ export class NgxRadiantLightbox {
   }
 
   handleKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Tab' && this.resolvedConfig().trapFocus) {
+      this.trapTabFocus(event);
+      return;
+    }
+
     if (event.key === 'Escape' && this.resolvedConfig().closeOnEscape) {
       event.preventDefault();
       this.close();
@@ -884,6 +1009,101 @@ export class NgxRadiantLightbox {
     event.preventDefault();
     this.toggleZoom();
     this.lastTap = null;
+  }
+
+  protected toolbarActionEnabled(action: NgxRadiantToolbarAction): boolean {
+    return this.resolvedConfig().toolbarActions.includes(action);
+  }
+
+  private hasCurrentSource(): boolean {
+    return this.currentItem().src.length > 0;
+  }
+
+  private fullscreenSupported(): boolean {
+    return typeof this.document.documentElement.requestFullscreen === 'function';
+  }
+
+  private attachFullscreenListener(): void {
+    if (this.fullscreenListenerAttached || typeof this.document.addEventListener !== 'function') {
+      return;
+    }
+
+    this.fullscreenListenerAttached = true;
+    this.document.addEventListener('fullscreenchange', () => {
+      this.isFullscreen.set(this.document.fullscreenElement === this.shell()?.nativeElement);
+    });
+  }
+
+  private exitFullscreen(): void {
+    if (this.document.fullscreenElement === this.shell()?.nativeElement) {
+      this.document.exitFullscreen?.().catch(() => undefined);
+    }
+    this.isFullscreen.set(false);
+  }
+
+  private syncDialogFocus(): void {
+    if (!this.open()) {
+      return;
+    }
+
+    if (!this.previousFocus && this.document.activeElement instanceof HTMLElement) {
+      this.previousFocus = this.document.activeElement;
+    }
+
+    queueMicrotask(() => {
+      this.shell()?.nativeElement.focus();
+    });
+  }
+
+  private restorePreviousFocus(): void {
+    if (!this.resolvedConfig().restoreFocus) {
+      this.previousFocus = null;
+      return;
+    }
+
+    const focusTarget = this.previousFocus;
+    this.previousFocus = null;
+    queueMicrotask(() => focusTarget?.focus?.());
+  }
+
+  private trapTabFocus(event: KeyboardEvent): void {
+    const shell = this.shell()?.nativeElement;
+    if (!shell) {
+      return;
+    }
+
+    const focusable = Array.from(
+      shell.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => element.offsetParent !== null || element === this.document.activeElement);
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      shell.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = this.document.activeElement;
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  private filenameFromSource(source: string): string {
+    try {
+      const url = new URL(source, this.getBaseHref());
+      const filename = url.pathname.split('/').filter(Boolean).at(-1);
+      return filename || 'ngx-radiant-download';
+    } catch {
+      return 'ngx-radiant-download';
+    }
   }
 
   private currentPointerDistance(): number {

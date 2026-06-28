@@ -10,6 +10,9 @@ All notable changes to Ngx Radiant are documented in this file.
 - Pinch zoom and mobile double-tap zoom for image items.
 - Lazy-loaded thumbnail images and configurable nearby image preloading.
 - New config options: `swipeNavigation`, `swipeThreshold`, `pinchZoom`, `doubleTapZoom`, `lazyLoad`, `preloadImages`, and `preloadRadius`.
+- Fullscreen toolbar action powered by the browser Fullscreen API.
+- Download and open-original toolbar actions, including optional per-item `downloadName`.
+- Configurable `toolbarActions` plus focus trap and restore-focus accessibility behavior.
 
 ## 21.0.0 - 2026-06-28
 

@@ -44,9 +44,9 @@
     </article>
     <article>
       <span class="feature-icon">03</span>
-      <h2>Directive triggers</h2>
-      <p>The directive can open a full gallery from any button, image, or card.</p>
-      <code>[ngxRadiant]</code>
+      <h2>Custom toolbar</h2>
+      <p>Add fullscreen, download, open-original, or trim toolbar actions per lightbox.</p>
+      <code>toolbarActions</code>
     </article>
   </section>
 
@@ -132,7 +132,7 @@
       <p class="eyebrow">Media support</p>
       <h2 id="media-demo-title">Zoomable images and embedded iframe content</h2>
       <p>
-        Image items expose zoom controls, swipe gestures, pinch zoom, lazy thumbnails, and preloading. Iframe items such as YouTube embeds use the same overlay while keeping
+        Image items expose zoom controls, fullscreen, download/open-original actions, swipe gestures, pinch zoom, lazy thumbnails, and preloading. Iframe items such as YouTube embeds use the same overlay while keeping
         navigation and counters hidden when only one item is present.
       </p>
     </div>
@@ -142,13 +142,13 @@
         type="button"
         class="media-demo-card"
         [ngxRadiant]="singleImage"
-        [radiantConfig]="{ zoomStep: 0.25, maxZoom: 8, showCounter: false, showZoomSlider: true }"
+        [radiantConfig]="{ zoomStep: 0.25, maxZoom: 8, showCounter: false, showZoomSlider: true, showDownload: true, showOpenOriginal: true, showFullscreenButton: true }"
         radiantAlt="Aurora lights reflected over an alpine mountain lake"
         radiantCaption="Zoom controls — use +, −, slider, drag when zoomed, or double-click the image."
         aria-label="Open zoomable image demo"
       >
         <span>Zoom image</span>
-        <strong>Slider zoom + drag panning</strong>
+        <strong>Slider zoom + fullscreen toolbar</strong>
       </button>
 
       <button

@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/ngx-radiant.svg)](https://www.npmjs.com/package/ngx-radiant)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Ngx Radiant is an Angular 21+ lightbox and image gallery library for polished media previews. It ships standalone Angular components and directive triggers for responsive galleries, image zoom, thumbnails, captions, keyboard navigation, video previews, and iframe/YouTube embeds.
+Ngx Radiant is an Angular 21+ lightbox and image gallery library for polished media previews. It ships standalone Angular components and directive triggers for responsive galleries, image zoom, thumbnails, captions, keyboard navigation, video previews, fullscreen toolbar controls, download/open-original actions, and iframe/YouTube embeds.
 
 ## Demo
 
@@ -34,6 +34,8 @@ npm run build:pages
 - Image, video, and iframe item rendering, including YouTube embed URLs
 - Mobile swipe navigation, pinch zoom, and double-tap zoom
 - Lazy thumbnail loading and configurable nearby image preloading
+- Fullscreen, download, open-original, and configurable toolbar actions
+- Focus trap and restore-focus accessibility behavior
 - Zoom in/out/reset controls for image items
 - Config object support via `[config]` and `[radiantConfig]`
 - Captions, counters, thumbnails, backdrop close
@@ -96,6 +98,9 @@ export class GalleryComponent {
     swipeNavigation: true,
     pinchZoom: true,
     preloadImages: true,
+    showFullscreenButton: true,
+    showDownload: true,
+    showOpenOriginal: true,
   };
 
   readonly items: NgxRadiantItem[] = [
@@ -185,6 +190,30 @@ readonly mediaItems: NgxRadiantItem[] = [
 </button>
 ```
 
+
+## Toolbar actions
+
+Use `toolbarActions` to choose which built-in controls appear and in what order. Enable optional actions with the matching config flag.
+
+```ts
+const config: NgxRadiantConfig = {
+  showFullscreenButton: true,
+  showDownload: true,
+  showOpenOriginal: true,
+  toolbarActions: ['zoomOut', 'resetZoom', 'zoomIn', 'fullscreen', 'download', 'openOriginal', 'close'],
+};
+
+const items: NgxRadiantItem[] = [
+  {
+    src: '/assets/gallery/aurora.jpg',
+    caption: 'Aurora over a mountain ridge',
+    downloadName: 'aurora.jpg',
+  },
+];
+```
+
+The dialog traps keyboard focus while open and restores focus to the trigger when it closes by default.
+
 ## API preview
 
 ### `NgxRadiantLightbox`
@@ -214,6 +243,13 @@ readonly mediaItems: NgxRadiantItem[] = [
 | `lazyLoad` | `boolean` | `true` | Lazy-load thumbnails and mark the active image as eager. Overrides `config.lazyLoad`. |
 | `preloadImages` | `boolean` | `true` | Preload nearby image items for faster navigation. Overrides `config.preloadImages`. |
 | `preloadRadius` | `number` | `1` | Number of previous/next image items to preload. Overrides `config.preloadRadius`. |
+| `toolbarActions` | `NgxRadiantToolbarAction[]` | built-in action list | Choose toolbar actions and order. Overrides `config.toolbarActions`. |
+| `fullscreen` | `boolean` | `true` | Enable Fullscreen API support. Overrides `config.fullscreen`. |
+| `showFullscreenButton` | `boolean` | `true` | Render the fullscreen toolbar action when supported. Overrides `config.showFullscreenButton`. |
+| `showDownload` | `boolean` | `false` | Render the download toolbar action. Overrides `config.showDownload`. |
+| `showOpenOriginal` | `boolean` | `false` | Render the open-original toolbar action. Overrides `config.showOpenOriginal`. |
+| `trapFocus` | `boolean` | `true` | Keep Tab focus inside the open dialog. Overrides `config.trapFocus`. |
+| `restoreFocus` | `boolean` | `true` | Restore focus to the previous active element on close. Overrides `config.restoreFocus`. |
 | `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe embeds. Overrides `config.iframeAspectRatio`. |
 | `iframeAutoplay` | `boolean` | `false` | Appends `autoplay=1` to iframe URLs. Overrides `config.iframeAutoplay`. |
 | `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` only when explicitly enabled. Overrides `config.iframeMuted`. |
@@ -259,6 +295,13 @@ interface NgxRadiantConfig {
   lazyLoad?: boolean;
   preloadImages?: boolean;
   preloadRadius?: number;
+  toolbarActions?: NgxRadiantToolbarAction[];
+  fullscreen?: boolean;
+  showFullscreenButton?: boolean;
+  showDownload?: boolean;
+  showOpenOriginal?: boolean;
+  trapFocus?: boolean;
+  restoreFocus?: boolean;
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;
@@ -275,6 +318,7 @@ interface NgxRadiantItem {
   alt?: string;
   caption?: string;
   thumb?: string;
+  downloadName?: string;
 }
 ```
 
