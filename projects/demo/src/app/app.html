@@ -31,18 +31,21 @@
   <section class="feature-grid" aria-label="Ngx Radiant feature highlights">
     <article>
       <span class="feature-icon">01</span>
-      <h2>Standalone Angular API</h2>
+      <h2>Typed Angular API</h2>
       <p>Use either the standalone component or the trigger directive with typed gallery items.</p>
+      <code>NgxRadiantItem[]</code>
     </article>
     <article>
       <span class="feature-icon">02</span>
-      <h2>Gallery interactions</h2>
+      <h2>Gallery controls</h2>
       <p>Captions, counters, thumbnails, backdrop close, and keyboard navigation are built in.</p>
+      <code>Escape / Arrow keys</code>
     </article>
     <article>
       <span class="feature-icon">03</span>
       <h2>Directive triggers</h2>
       <p>The directive can open a full gallery from any button, image, or card.</p>
+      <code>[ngxRadiant]</code>
     </article>
   </section>
 
@@ -58,6 +61,19 @@
 
     <div class="directive-demo__grid">
       <article class="directive-card directive-card--multi">
+        <button
+          type="button"
+          class="collage-trigger"
+          [ngxRadiant]="galleryItems"
+          [radiantIndex]="0"
+          aria-label="Open the multi-image lightbox from the preview collage"
+        >
+          <img src="demo-art/aurora-landscape.png" alt="Aurora landscape preview" />
+          <img src="demo-art/canyon-prism.png" alt="Radiant canyon preview" />
+          <img src="demo-art/bioluminescent-coast.png" alt="Bioluminescent coast preview" />
+          <span>3 image gallery</span>
+        </button>
+
         <div>
           <span class="example-label">Multi-image directive</span>
           <h3>Gallery trigger</h3>
@@ -86,7 +102,7 @@
           aria-label="Open single image by clicking the preview image"
         >
           <img class="single-preview" [src]="singleImage" alt="Aurora lights reflected over an alpine mountain lake" />
-          <span>Click image to open</span>
+          <span>Click to open</span>
         </button>
         <div>
           <span class="example-label">Single-image directive</span>

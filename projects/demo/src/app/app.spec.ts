@@ -26,8 +26,24 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Ngx Radiant');
     expect(compiled.querySelectorAll('.gallery-tile').length).toBe(3);
+    expect(compiled.querySelectorAll('.feature-grid code').length).toBe(3);
     expect(compiled.querySelector('.directive-card--multi')?.textContent).toContain('Multi-image directive');
+    expect(compiled.querySelector('.collage-trigger')?.textContent).toContain('3 image gallery');
     expect(compiled.querySelector('.directive-card--single')?.textContent).toContain('Single-image directive');
+  });
+
+
+  it('opens the multi-image lightbox from the preview collage', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.collage-trigger')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.querySelector('.ngx-radiant')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 3');
   });
 
   it('opens the lightbox from the hero button', async () => {
