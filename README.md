@@ -150,6 +150,8 @@ Single-image shorthand automatically hides the counter and previous/next control
 
 Iframe / YouTube example:
 
+> Iframe sources must be application-controlled. Ngx Radiant only allows `http:`/`https:` iframe URLs by default. Use `iframeAllowedOrigins` when you want a stricter allowlist.
+
 ```ts
 readonly mediaItems: NgxRadiantItem[] = [
   {
@@ -195,6 +197,7 @@ readonly mediaItems: NgxRadiantItem[] = [
 | `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe embeds. Overrides `config.iframeAspectRatio`. |
 | `iframeAutoplay` | `boolean` | `false` | Appends `autoplay=1` to iframe URLs. Overrides `config.iframeAutoplay`. |
 | `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` to iframe URLs for autoplay-friendly embeds. Overrides `config.iframeMuted`. |
+| `iframeAllowedOrigins` | `string[]` | `[]` | Optional iframe origin allowlist. Empty means any `http:`/`https:` origin is allowed; unsupported protocols render `about:blank`. |
 
 ### `NgxRadiantDirective`
 
@@ -232,6 +235,7 @@ interface NgxRadiantConfig {
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;
+  iframeAllowedOrigins?: string[];
 }
 ```
 

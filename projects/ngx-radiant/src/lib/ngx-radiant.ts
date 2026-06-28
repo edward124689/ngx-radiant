@@ -39,6 +39,7 @@ export interface NgxRadiantConfig {
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;
+  iframeAllowedOrigins?: string[];
 }
 
 const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
@@ -57,6 +58,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   iframeAspectRatio: '16 / 9',
   iframeAutoplay: false,
   iframeMuted: false,
+  iframeAllowedOrigins: [],
 };
 
 @Component({
@@ -495,6 +497,7 @@ export class NgxRadiantLightbox {
   readonly iframeAspectRatio = input<string | undefined>(undefined);
   readonly iframeAutoplay = input<boolean | undefined>(undefined);
   readonly iframeMuted = input<boolean | undefined>(undefined);
+  readonly iframeAllowedOrigins = input<string[] | undefined>(undefined);
 
   readonly open = input(false);
   readonly index = input(0);
@@ -531,6 +534,8 @@ export class NgxRadiantLightbox {
       iframeAspectRatio: this.iframeAspectRatio() ?? config.iframeAspectRatio ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAspectRatio,
       iframeAutoplay: this.iframeAutoplay() ?? config.iframeAutoplay ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAutoplay,
       iframeMuted: this.iframeMuted() ?? config.iframeMuted ?? NGX_RADIANT_DEFAULT_CONFIG.iframeMuted,
+      iframeAllowedOrigins:
+        this.iframeAllowedOrigins() ?? config.iframeAllowedOrigins ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAllowedOrigins,
     };
   });
 
@@ -720,12 +725,19 @@ export class NgxRadiantLightbox {
 
   private resolveFrameSrc(): string {
     const config = this.resolvedConfig();
-    if (!config.iframeAutoplay && !config.iframeMuted) {
-      return this.currentItem().src;
-    }
+    const source = this.currentItem().src;
+    const baseHref = this.getBaseHref();
 
     try {
-      const url = new URL(this.currentItem().src, globalThis.location?.origin ?? 'http://localhost');
+      const url = new URL(source, baseHref);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return 'about:blank';
+      }
+
+      if (config.iframeAllowedOrigins.length > 0 && !config.iframeAllowedOrigins.includes(url.origin)) {
+        return 'about:blank';
+      }
+
       if (config.iframeAutoplay) {
         url.searchParams.set('autoplay', '1');
       }
@@ -733,10 +745,19 @@ export class NgxRadiantLightbox {
         url.searchParams.set('mute', '1');
         url.searchParams.set('muted', '1');
       }
-      return url.toString();
+
+      return this.isRelativeUrl(source) ? `${url.pathname}${url.search}${url.hash}` : url.toString();
     } catch {
-      return this.currentItem().src;
+      return 'about:blank';
     }
+  }
+
+  private getBaseHref(): string {
+    return typeof globalThis.location !== 'undefined' ? globalThis.location.origin : 'http://localhost';
+  }
+
+  private isRelativeUrl(url: string): boolean {
+    return !/^[a-z][a-z\d+.-]*:/i.test(url) && !url.startsWith('//');
   }
 
   private clampCurrentPan(): void {

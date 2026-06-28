@@ -192,4 +192,56 @@ describe('NgxRadiantLightbox', () => {
     expect(fixture.nativeElement.querySelector('[aria-label="Zoom in"]')).toBeNull();
   });
 
+
+  it('rejects unsafe iframe protocols and origins before trusting the resource URL', () => {
+    fixture.componentRef.setInput('items', [
+      {
+        src: 'javascript:alert(1)',
+        type: 'iframe',
+      },
+    ]);
+    fixture.detectChanges();
+
+    let frame = fixture.nativeElement.querySelector('.ngx-radiant__frame') as HTMLIFrameElement;
+    expect(frame.getAttribute('src')).toBe('about:blank');
+
+    fixture.componentRef.setInput('items', [
+      {
+        src: 'https://evil.example/embed',
+        type: 'iframe',
+      },
+    ]);
+    fixture.componentRef.setInput('config', { iframeAllowedOrigins: ['https://www.youtube.com'] });
+    fixture.detectChanges();
+
+    frame = fixture.nativeElement.querySelector('.ngx-radiant__frame') as HTMLIFrameElement;
+    expect(frame.getAttribute('src')).toBe('about:blank');
+  });
+
+  it('supports direct iframe inputs overriding config values', () => {
+    fixture.componentRef.setInput('items', [
+      {
+        src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
+        type: 'iframe',
+      },
+    ]);
+    fixture.componentRef.setInput('config', {
+      iframeAspectRatio: '1 / 1',
+      iframeAutoplay: false,
+      iframeMuted: false,
+      iframeAllowedOrigins: ['https://example.com'],
+    });
+    fixture.componentRef.setInput('iframeAspectRatio', '21 / 9');
+    fixture.componentRef.setInput('iframeAutoplay', true);
+    fixture.componentRef.setInput('iframeMuted', true);
+    fixture.componentRef.setInput('iframeAllowedOrigins', ['https://www.youtube.com']);
+    fixture.detectChanges();
+
+    const frame = fixture.nativeElement.querySelector('.ngx-radiant__frame') as HTMLIFrameElement;
+    expect(frame.style.aspectRatio).toBe('21 / 9');
+    expect(frame.getAttribute('src')).toContain('autoplay=1');
+    expect(frame.getAttribute('src')).toContain('mute=1');
+    expect(frame.getAttribute('src')).not.toBe('about:blank');
+  });
+
 });
