@@ -57,6 +57,19 @@ describe('NgxRadiantLightbox', () => {
     expect(document.body.style.overflow).toBe('auto');
   });
 
+  it('lets the direct lockBodyScroll input override config', () => {
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    document.body.style.overflow = 'auto';
+
+    fixture.componentRef.setInput('config', { lockBodyScroll: true });
+    fixture.componentRef.setInput('lockBodyScroll', false);
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+
+    expect(document.body.style.overflow).toBe('auto');
+  });
+
   it('keeps body scroll locked until every open instance closes', () => {
     const secondFixture = TestBed.createComponent(NgxRadiantLightbox);
 
@@ -649,6 +662,7 @@ describe('NgxRadiantLightbox browser guards', () => {
     launcher.textContent = 'Launcher';
     document.body.appendChild(launcher);
     launcher.focus();
+    document.body.style.overflow = 'scroll';
 
     try {
       const serverFixture = TestBed.createComponent(NgxRadiantLightbox);
@@ -658,9 +672,11 @@ describe('NgxRadiantLightbox browser guards', () => {
       await Promise.resolve();
 
       expect(document.activeElement).toBe(launcher);
+      expect(document.body.style.overflow).toBe('scroll');
       expect(serverFixture.nativeElement.querySelector('[aria-label="Enter fullscreen"]')).toBeNull();
     } finally {
       launcher.remove();
+      document.body.style.overflow = '';
     }
   });
 });

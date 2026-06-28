@@ -231,6 +231,12 @@ Download and open-original actions only run for relative URLs or `http:`/`https:
 | `radiantLoop` | `boolean` | `true` | Wrap navigation at the first/last item. |
 | `radiantShowThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. |
 
+Directive users can opt out of background scroll locking through the shared config object:
+
+```html
+<button [ngxRadiant]="items" [radiantConfig]="{ lockBodyScroll: false }">Open gallery</button>
+```
+
 ### `NgxRadiantConfig`
 
 ```ts
