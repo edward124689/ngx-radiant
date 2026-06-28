@@ -119,6 +119,10 @@ describe('NgxRadiantLightbox', () => {
     fixture.detectChanges();
 
     const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    Object.defineProperty(image, 'clientWidth', { configurable: true, value: 400 });
+    Object.defineProperty(image, 'clientHeight', { configurable: true, value: 300 });
+    Object.defineProperty(image.parentElement, 'clientWidth', { configurable: true, value: 600 });
+    Object.defineProperty(image.parentElement, 'clientHeight', { configurable: true, value: 400 });
     image.setPointerCapture = () => undefined;
     image.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, clientX: 10, clientY: 20, bubbles: true }));
     image.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, clientX: 40, clientY: 55, bubbles: true }));
@@ -126,6 +130,28 @@ describe('NgxRadiantLightbox', () => {
     fixture.detectChanges();
 
     expect(image.style.transform).toBe('translate(30px, 35px) scale(3)');
+  });
+
+  it('clamps dragging so zoomed images stay within the stage', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('config', { maxZoom: 3 });
+    fixture.detectChanges();
+
+    component.setZoom(3);
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    Object.defineProperty(image, 'clientWidth', { configurable: true, value: 400 });
+    Object.defineProperty(image, 'clientHeight', { configurable: true, value: 300 });
+    Object.defineProperty(image.parentElement, 'clientWidth', { configurable: true, value: 600 });
+    Object.defineProperty(image.parentElement, 'clientHeight', { configurable: true, value: 400 });
+    image.setPointerCapture = () => undefined;
+    image.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, clientX: 0, clientY: 0, bubbles: true }));
+    image.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, clientX: 2000, clientY: 2000, bubbles: true }));
+    image.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, clientX: 2000, clientY: 2000, bubbles: true }));
+    fixture.detectChanges();
+
+    expect(image.style.transform).toBe('translate(300px, 250px) scale(3)');
   });
 
   it('supports config-driven UI options', () => {
@@ -145,7 +171,7 @@ describe('NgxRadiantLightbox', () => {
     expect(fixture.nativeElement.querySelector('[aria-label="Zoom in"]')).toBeNull();
   });
 
-  it('renders iframe items with an embed frame', () => {
+  it('renders iframe items with configurable aspect ratio and autoplay params', () => {
     fixture.componentRef.setInput('items', [
       {
         src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
@@ -153,11 +179,15 @@ describe('NgxRadiantLightbox', () => {
         caption: 'YouTube embed',
       },
     ]);
+    fixture.componentRef.setInput('config', { iframeAspectRatio: '4 / 3', iframeAutoplay: true, iframeMuted: true });
     fixture.componentRef.setInput('index', 0);
     fixture.detectChanges();
 
     const frame = fixture.nativeElement.querySelector('.ngx-radiant__frame') as HTMLIFrameElement;
     expect(frame).toBeTruthy();
+    expect(frame.style.aspectRatio).toBe('4 / 3');
+    expect(frame.getAttribute('src')).toContain('autoplay=1');
+    expect(frame.getAttribute('src')).toContain('mute=1');
     expect(frame.getAttribute('allowfullscreen')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[aria-label="Zoom in"]')).toBeNull();
   });

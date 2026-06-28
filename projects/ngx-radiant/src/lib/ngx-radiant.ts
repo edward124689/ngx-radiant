@@ -34,6 +34,9 @@ export interface NgxRadiantConfig {
   maxZoom?: number;
   zoomStep?: number;
   showZoomSlider?: boolean;
+  iframeAspectRatio?: string;
+  iframeAutoplay?: boolean;
+  iframeMuted?: boolean;
 }
 
 const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
@@ -49,6 +52,9 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   maxZoom: 3,
   zoomStep: 0.25,
   showZoomSlider: false,
+  iframeAspectRatio: '16 / 9',
+  iframeAutoplay: false,
+  iframeMuted: false,
 };
 
 @Component({
@@ -130,6 +136,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                 <iframe
                   class="ngx-radiant__frame"
                   [src]="trustedFrameSrc()"
+                  [style.aspect-ratio]="resolvedIframeAspectRatio()"
                   title="Ngx Radiant embedded content"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowfullscreen
@@ -371,7 +378,8 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
 
     .ngx-radiant__frame {
       width: min(100%, 960px);
-      height: min(100%, 640px);
+      height: auto;
+      max-height: 100%;
     }
 
     .ngx-radiant__caption {
@@ -481,6 +489,9 @@ export class NgxRadiantLightbox {
   readonly maxZoom = input<number | undefined>(undefined);
   readonly zoomStep = input<number | undefined>(undefined);
   readonly showZoomSlider = input<boolean | undefined>(undefined);
+  readonly iframeAspectRatio = input<string | undefined>(undefined);
+  readonly iframeAutoplay = input<boolean | undefined>(undefined);
+  readonly iframeMuted = input<boolean | undefined>(undefined);
 
   readonly open = input(false);
   readonly index = input(0);
@@ -513,6 +524,9 @@ export class NgxRadiantLightbox {
       maxZoom: this.maxZoom() ?? config.maxZoom ?? NGX_RADIANT_DEFAULT_CONFIG.maxZoom,
       zoomStep: this.zoomStep() ?? config.zoomStep ?? NGX_RADIANT_DEFAULT_CONFIG.zoomStep,
       showZoomSlider: this.showZoomSlider() ?? config.showZoomSlider ?? NGX_RADIANT_DEFAULT_CONFIG.showZoomSlider,
+      iframeAspectRatio: this.iframeAspectRatio() ?? config.iframeAspectRatio ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAspectRatio,
+      iframeAutoplay: this.iframeAutoplay() ?? config.iframeAutoplay ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAutoplay,
+      iframeMuted: this.iframeMuted() ?? config.iframeMuted ?? NGX_RADIANT_DEFAULT_CONFIG.iframeMuted,
     };
   });
 
@@ -527,8 +541,9 @@ export class NgxRadiantLightbox {
   protected readonly resolvedMinZoom = computed(() => Math.max(this.resolvedConfig().minZoom, 0.1));
   protected readonly resolvedMaxZoom = computed(() => Math.max(this.resolvedConfig().maxZoom, this.resolvedMinZoom()));
   protected readonly resolvedZoomStep = computed(() => Math.max(this.resolvedConfig().zoomStep, 0.01));
+  protected readonly resolvedIframeAspectRatio = computed(() => this.resolvedConfig().iframeAspectRatio);
   protected readonly trustedFrameSrc = computed<SafeResourceUrl>(() =>
-    this.sanitizer.bypassSecurityTrustResourceUrl(this.currentItem().src),
+    this.sanitizer.bypassSecurityTrustResourceUrl(this.resolveFrameSrc()),
   );
   protected readonly resolvedAriaLabel = computed(() => this.resolvedConfig().ariaLabel);
   protected readonly resolvedShowThumbnails = computed(() => this.resolvedConfig().showThumbnails);
@@ -587,7 +602,7 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.zoomLevel.update((zoom) => this.clampZoom(zoom + this.resolvedZoomStep()));
+    this.setZoom(this.zoomLevel() + this.resolvedZoomStep());
   }
 
   zoomOut(): void {
@@ -595,7 +610,7 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.zoomLevel.update((zoom) => this.clampZoom(zoom - this.resolvedZoomStep()));
+    this.setZoom(this.zoomLevel() - this.resolvedZoomStep());
   }
 
   resetZoom(): void {
@@ -613,7 +628,10 @@ export class NgxRadiantLightbox {
     this.zoomLevel.set(nextZoom);
     if (nextZoom <= this.resolvedMinZoom()) {
       this.resetPan();
+      return;
     }
+
+    this.clampCurrentPan();
   }
 
   toggleZoom(): void {
@@ -647,8 +665,9 @@ export class NgxRadiantLightbox {
     }
 
     event.preventDefault();
-    this.panX.set(this.dragStart.panX + event.clientX - this.dragStart.x);
-    this.panY.set(this.dragStart.panY + event.clientY - this.dragStart.y);
+    const bounds = this.getPanBounds(event.currentTarget as HTMLElement);
+    this.panX.set(this.clamp(this.dragStart.panX + event.clientX - this.dragStart.x, -bounds.x, bounds.x));
+    this.panY.set(this.clamp(this.dragStart.panY + event.clientY - this.dragStart.y, -bounds.y, bounds.y));
   }
 
   endPan(event: PointerEvent): void {
@@ -693,6 +712,59 @@ export class NgxRadiantLightbox {
       event.preventDefault();
       this.resetZoom();
     }
+  }
+
+  private resolveFrameSrc(): string {
+    const config = this.resolvedConfig();
+    if (!config.iframeAutoplay && !config.iframeMuted) {
+      return this.currentItem().src;
+    }
+
+    try {
+      const url = new URL(this.currentItem().src, globalThis.location?.origin ?? 'http://localhost');
+      if (config.iframeAutoplay) {
+        url.searchParams.set('autoplay', '1');
+      }
+      if (config.iframeMuted) {
+        url.searchParams.set('mute', '1');
+        url.searchParams.set('muted', '1');
+      }
+      return url.toString();
+    } catch {
+      return this.currentItem().src;
+    }
+  }
+
+  private clampCurrentPan(): void {
+    if (!this.open()) {
+      return;
+    }
+
+    const media = document.querySelector('.ngx-radiant__media') as HTMLElement | null;
+    if (!media) {
+      return;
+    }
+
+    const bounds = this.getPanBounds(media);
+    this.panX.set(this.clamp(this.panX(), -bounds.x, bounds.x));
+    this.panY.set(this.clamp(this.panY(), -bounds.y, bounds.y));
+  }
+
+  private getPanBounds(media: HTMLElement): { x: number; y: number } {
+    const stage = media.parentElement as HTMLElement | null;
+    const zoom = this.zoomLevel();
+    const mediaWidth = media.clientWidth || media.getBoundingClientRect().width;
+    const mediaHeight = media.clientHeight || media.getBoundingClientRect().height;
+    const stageWidth = stage?.clientWidth || mediaWidth;
+    const stageHeight = stage?.clientHeight || mediaHeight;
+    return {
+      x: Math.max((mediaWidth * zoom - stageWidth) / 2, 0),
+      y: Math.max((mediaHeight * zoom - stageHeight) / 2, 0),
+    };
+  }
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
   }
 
   private normalizeIndex(index: number): number {
