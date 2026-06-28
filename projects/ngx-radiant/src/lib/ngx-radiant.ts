@@ -376,7 +376,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
       min-width: 0;
       min-height: 0;
       margin: 0;
-      touch-action: pan-y pinch-zoom;
+      touch-action: pan-y;
     }
 
     .ngx-radiant__media,
@@ -627,6 +627,7 @@ export class NgxRadiantLightbox {
       return;
     }
 
+    this.resetPan();
     this.openChange.emit(false);
     this.closed.emit();
   }
@@ -729,6 +730,7 @@ export class NgxRadiantLightbox {
 
   endPan(event: PointerEvent): void {
     if (this.dragStart?.pointerId === event.pointerId) {
+      this.releasePointer(event.currentTarget as HTMLElement, event.pointerId);
       this.dragStart = null;
       this.dragging.set(false);
     }
@@ -782,6 +784,7 @@ export class NgxRadiantLightbox {
     }
 
     const start = this.gestureStart;
+    this.releasePointer(event.currentTarget as HTMLElement, event.pointerId);
     this.activePointers.delete(event.pointerId);
 
     if (this.activePointers.size < 2) {
@@ -898,6 +901,14 @@ export class NgxRadiantLightbox {
     } catch {
       // Synthetic PointerEvents can miss the browser's active-pointer bookkeeping.
       // Gesture state still works without capture; real touches use capture when available.
+    }
+  }
+
+  private releasePointer(target: HTMLElement, pointerId: number): void {
+    try {
+      target.releasePointerCapture?.(pointerId);
+    } catch {
+      // Capture may not exist for synthetic events or already-cancelled touch streams.
     }
   }
 
@@ -1030,6 +1041,7 @@ export class NgxRadiantLightbox {
     this.dragStart = null;
     this.gestureStart = null;
     this.pinchStart = null;
+    this.lastTap = null;
     this.activePointers.clear();
     this.dragging.set(false);
   }

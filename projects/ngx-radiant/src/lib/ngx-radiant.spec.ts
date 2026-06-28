@@ -199,6 +199,27 @@ describe('NgxRadiantLightbox', () => {
     expect(image.style.transform).toBe('translate(0px, 0px) scale(4)');
   });
 
+
+  it('clears pending double-tap state when the item changes', () => {
+    fixture.componentRef.setInput('config', { maxZoom: 4 });
+    fixture.detectChanges();
+
+    let stage = fixture.nativeElement.querySelector('.ngx-radiant__stage') as HTMLElement;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 31, pointerType: 'touch', clientX: 150, clientY: 100, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 31, pointerType: 'touch', clientX: 150, clientY: 100, bubbles: true }));
+
+    fixture.componentRef.setInput('index', 1);
+    fixture.detectChanges();
+
+    stage = fixture.nativeElement.querySelector('.ngx-radiant__stage') as HTMLElement;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 32, pointerType: 'touch', clientX: 150, clientY: 100, bubbles: true }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 32, pointerType: 'touch', clientX: 150, clientY: 100, bubbles: true }));
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(image.style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
+
   it('lazy-loads thumbnails and preloads nearby image items', () => {
     const originalImage = globalThis.Image;
     const preloaded: string[] = [];
