@@ -419,7 +419,7 @@ code {
   border-radius: 1.35rem;
   background:
     linear-gradient(180deg, transparent 20%, rgb(2 6 23 / 78%) 100%),
-    url('/ngx-radiant/demo-art/aurora-landscape.png') center / cover;
+    url('../../public/demo-art/aurora-landscape.png') center / cover;
   color: #f8fafc;
   cursor: zoom-in;
   padding: 1.1rem;
@@ -430,7 +430,7 @@ code {
 .media-demo-card--iframe {
   background:
     linear-gradient(180deg, transparent 20%, rgb(2 6 23 / 78%) 100%),
-    url('/ngx-radiant/demo-art/canyon-prism.png') center / cover;
+    url('../../public/demo-art/canyon-prism.png') center / cover;
 }
 
 .media-demo-card span {
