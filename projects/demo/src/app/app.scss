@@ -294,6 +294,35 @@ code {
   align-self: end;
 }
 
+.single-preview-button {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 0;
+  border-radius: 1.1rem;
+  background: transparent;
+  cursor: zoom-in;
+  padding: 0;
+  text-align: left;
+}
+
+.single-preview-button span {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.8rem;
+  border-radius: 999px;
+  background: rgb(2 6 23 / 74%);
+  color: #f8fafc;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  backdrop-filter: blur(14px);
+}
+
+.single-preview-button:hover {
+  transform: translateY(-2px);
+}
+
 .mini-strip img,
 .single-preview {
   display: block;

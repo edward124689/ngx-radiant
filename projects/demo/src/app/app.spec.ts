@@ -43,7 +43,7 @@ describe('App', () => {
     expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 3');
   });
 
-  it('opens the directive single-image demo', async () => {
+  it('opens the directive single-image demo button', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
@@ -55,5 +55,19 @@ describe('App', () => {
     expect(document.querySelector('.ngx-radiant')).toBeTruthy();
     expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 1');
     expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image directive preview');
+  });
+
+  it('opens the single-image lightbox by clicking the preview image', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.single-preview-button')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.querySelector('.ngx-radiant')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 1');
+    expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image direct image click');
   });
 });

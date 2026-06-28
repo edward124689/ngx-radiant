@@ -76,7 +76,18 @@
       </article>
 
       <article class="directive-card directive-card--single">
-        <img class="single-preview" [src]="singleImage" alt="Aurora lights reflected over an alpine mountain lake" />
+        <button
+          type="button"
+          class="single-preview-button"
+          [ngxRadiant]="singleImage"
+          radiantAlt="Aurora lights reflected over an alpine mountain lake"
+          radiantCaption="Single-image direct image click — the directive can live on the image trigger itself."
+          [radiantShowThumbnails]="false"
+          aria-label="Open single image by clicking the preview image"
+        >
+          <img class="single-preview" [src]="singleImage" alt="Aurora lights reflected over an alpine mountain lake" />
+          <span>Click image to open</span>
+        </button>
         <div>
           <span class="example-label">Single-image directive</span>
           <h3>Standalone image trigger</h3>
