@@ -30,6 +30,7 @@ describe('App', () => {
     expect(compiled.querySelector('.directive-card--multi')?.textContent).toContain('Multi-image directive');
     expect(compiled.querySelector('.collage-trigger')?.textContent).toContain('3 image gallery');
     expect(compiled.querySelector('.directive-card--single')?.textContent).toContain('Single-image directive');
+    expect(compiled.querySelector('.media-demo')?.textContent).toContain('Iframe / YouTube');
   });
 
 
@@ -69,7 +70,8 @@ describe('App', () => {
     await fixture.whenStable();
 
     expect(document.querySelector('.ngx-radiant')).toBeTruthy();
-    expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 1');
+    expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
     expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image directive preview');
   });
 
@@ -83,7 +85,23 @@ describe('App', () => {
     await fixture.whenStable();
 
     expect(document.querySelector('.ngx-radiant')).toBeTruthy();
-    expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 1');
+    expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
     expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image direct image click');
   });
+
+  it('opens the iframe media demo without single-item counter or nav', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.media-demo-card--iframe')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.querySelector('.ngx-radiant__frame')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
+  });
+
 });

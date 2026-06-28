@@ -64,6 +64,25 @@ describe('NgxRadiantDirective', () => {
     expect(image?.getAttribute('alt')).toBe('Single image');
     expect(overlay?.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single caption');
   });
+
+  it('passes radiantConfig to the created lightbox', async () => {
+    await TestBed.resetTestingModule()
+      .configureTestingModule({
+        imports: [ConfigHost],
+      })
+      .compileComponents();
+
+    const configFixture = TestBed.createComponent(ConfigHost);
+    configFixture.detectChanges();
+    configFixture.nativeElement.querySelector('button').click();
+    configFixture.detectChanges();
+
+    const overlay = document.querySelector('ngx-radiant-overlay');
+    expect(overlay?.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(overlay?.querySelector('.ngx-radiant__nav')).toBeNull();
+    expect(overlay?.querySelector('[aria-label="Zoom in"]')).toBeNull();
+  });
+
 });
 
 @Component({
@@ -80,3 +99,23 @@ describe('NgxRadiantDirective', () => {
   `,
 })
 class SingleImageHost {}
+
+
+@Component({
+  imports: [NgxRadiantDirective],
+  template: `
+    <button
+      type="button"
+      [ngxRadiant]="items"
+      [radiantConfig]="{ showCounter: false, showNavigation: false, zoomable: false }"
+    >
+      Open configured
+    </button>
+  `,
+})
+class ConfigHost {
+  readonly items: NgxRadiantItem[] = [
+    { src: '/assets/configured-1.jpg', alt: 'Configured first' },
+    { src: '/assets/configured-2.jpg', alt: 'Configured second' },
+  ];
+}

@@ -63,4 +63,69 @@ describe('NgxRadiantLightbox', () => {
 
     expect(emittedOpenStates).toEqual([false]);
   });
+
+  it('hides counter and navigation controls for a single item', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('index', 0);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__nav--prev')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__nav--next')).toBeNull();
+  });
+
+  it('zooms image content in and out', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('config', { zoomStep: 0.5, maxZoom: 2 });
+    fixture.detectChanges();
+
+    const zoomIn = fixture.nativeElement.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
+    zoomIn.click();
+    fixture.detectChanges();
+
+    let image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(image.style.transform).toBe('scale(1.5)');
+
+    const zoomOut = fixture.nativeElement.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
+    zoomOut.click();
+    fixture.detectChanges();
+
+    image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(image.style.transform).toBe('scale(1)');
+  });
+
+  it('supports config-driven UI options', () => {
+    fixture.componentRef.setInput('config', {
+      showCounter: false,
+      showNavigation: false,
+      showThumbnails: false,
+      zoomable: false,
+      ariaLabel: 'Configured lightbox',
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant')?.getAttribute('aria-label')).toBe('Configured lightbox');
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__nav')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__thumbs')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Zoom in"]')).toBeNull();
+  });
+
+  it('renders iframe items with an embed frame', () => {
+    fixture.componentRef.setInput('items', [
+      {
+        src: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        type: 'iframe',
+        caption: 'YouTube embed',
+      },
+    ]);
+    fixture.componentRef.setInput('index', 0);
+    fixture.detectChanges();
+
+    const frame = fixture.nativeElement.querySelector('.ngx-radiant__frame') as HTMLIFrameElement;
+    expect(frame).toBeTruthy();
+    expect(frame.getAttribute('allowfullscreen')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Zoom in"]')).toBeNull();
+  });
+
 });

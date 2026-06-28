@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgxRadiantDirective, NgxRadiantItem } from 'ngx-radiant';
+import { NgxRadiantConfig, NgxRadiantDirective, NgxRadiantItem } from 'ngx-radiant';
 
 @Component({
   selector: 'app-root',
@@ -9,6 +9,20 @@ import { NgxRadiantDirective, NgxRadiantItem } from 'ngx-radiant';
 })
 export class App {
   protected readonly singleImage = 'demo-art/aurora-landscape.png';
+  protected readonly compactConfig: NgxRadiantConfig = {
+    zoomStep: 0.5,
+    maxZoom: 2.5,
+    showThumbnails: true,
+  };
+
+  protected readonly iframeItems: NgxRadiantItem[] = [
+    {
+      src: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      type: 'iframe',
+      caption: 'Iframe support — YouTube embeds render inside the same Radiant overlay.',
+      thumb: 'demo-art/canyon-prism.png',
+    },
+  ];
 
   protected readonly galleryItems: NgxRadiantItem[] = [
     {

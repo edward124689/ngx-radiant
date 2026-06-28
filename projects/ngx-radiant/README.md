@@ -18,7 +18,7 @@ npm install ngx-radiant
 
 ```ts
 import { Component, signal } from '@angular/core';
-import { NgxRadiantItem, NgxRadiantLightbox } from 'ngx-radiant';
+import { NgxRadiantConfig, NgxRadiantItem, NgxRadiantLightbox } from 'ngx-radiant';
 
 @Component({
   selector: 'app-gallery',
@@ -32,12 +32,19 @@ import { NgxRadiantItem, NgxRadiantLightbox } from 'ngx-radiant';
       (openChange)="isOpen.set($event)"
       [index]="activeIndex()"
       (indexChange)="activeIndex.set($event)"
+      [config]="config"
     />
   `,
 })
 export class GalleryComponent {
   readonly isOpen = signal(false);
   readonly activeIndex = signal(0);
+  readonly config: NgxRadiantConfig = {
+    zoomStep: 0.5,
+    maxZoom: 3,
+    showThumbnails: true,
+  };
+
   readonly items: NgxRadiantItem[] = [
     {
       src: '/assets/gallery/aurora.jpg',
@@ -76,7 +83,7 @@ export class GalleryComponent {
 }
 ```
 
-Single-image shorthand:
+Single-image shorthand automatically hides the counter and previous/next controls:
 
 ```html
 <button
@@ -84,8 +91,31 @@ Single-image shorthand:
   ngxRadiant="/assets/gallery/aurora.jpg"
   radiantAlt="Aurora over a mountain ridge"
   radiantCaption="Aurora over a mountain ridge"
+  [radiantConfig]="{ zoomStep: 0.5, maxZoom: 3 }"
 >
   Open image
+</button>
+```
+
+Iframe / YouTube example:
+
+```ts
+readonly mediaItems: NgxRadiantItem[] = [
+  {
+    src: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    type: 'iframe',
+    caption: 'YouTube embed',
+  },
+];
+```
+
+```html
+<button
+  type="button"
+  [ngxRadiant]="mediaItems"
+  [radiantConfig]="{ showCounter: false, showNavigation: false, zoomable: false }"
+>
+  Open YouTube
 </button>
 ```
 
@@ -98,10 +128,18 @@ Single-image shorthand:
 | `items` | `NgxRadiantItem[]` | `[]` | Gallery items to display. |
 | `open` / `openChange` | `boolean` | `false` | Controls visibility. |
 | `index` / `indexChange` | `number` | `0` | Controls the selected item. |
-| `ariaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. |
-| `closeOnEscape` | `boolean` | `true` | Close the lightbox when Escape is pressed. |
-| `loop` | `boolean` | `true` | Wrap navigation at the first/last item. |
-| `showThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. |
+| `config` | `NgxRadiantConfig` | `null` | Shared config object for controls, zoom, and UI visibility. |
+| `ariaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. Overrides `config.ariaLabel`. |
+| `closeOnEscape` | `boolean` | `true` | Close the lightbox when Escape is pressed. Overrides `config.closeOnEscape`. |
+| `loop` | `boolean` | `true` | Wrap navigation at the first/last item. Overrides `config.loop`. |
+| `showThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. Overrides `config.showThumbnails`. |
+| `showCounter` | `boolean` | `true` | Render the counter when there is more than one item. Overrides `config.showCounter`. |
+| `showNavigation` | `boolean` | `true` | Render previous/next controls when there is more than one item. Overrides `config.showNavigation`. |
+| `zoomable` | `boolean` | `true` | Enable zoom controls for image items. Overrides `config.zoomable`. |
+| `initialZoom` | `number` | `1` | Initial image zoom level. Overrides `config.initialZoom`. |
+| `minZoom` | `number` | `1` | Minimum image zoom level. Overrides `config.minZoom`. |
+| `maxZoom` | `number` | `3` | Maximum image zoom level. Overrides `config.maxZoom`. |
+| `zoomStep` | `number` | `0.25` | Amount changed by each zoom in/out action. Overrides `config.zoomStep`. |
 
 ### `NgxRadiantDirective`
 
@@ -115,9 +153,28 @@ Single-image shorthand:
 | `radiantThumb` | `string` | `undefined` | Thumbnail for string shorthand. |
 | `radiantType` | `'image' \| 'video' \| 'iframe'` | `undefined` | Media type for string shorthand. |
 | `radiantAriaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. |
+| `radiantConfig` | `NgxRadiantConfig` | `null` | Shared config object passed to the created lightbox. |
 | `radiantCloseOnEscape` | `boolean` | `true` | Close the overlay when Escape is pressed. |
 | `radiantLoop` | `boolean` | `true` | Wrap navigation at the first/last item. |
 | `radiantShowThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. |
+
+### `NgxRadiantConfig`
+
+```ts
+interface NgxRadiantConfig {
+  ariaLabel?: string;
+  closeOnEscape?: boolean;
+  loop?: boolean;
+  showThumbnails?: boolean;
+  showCounter?: boolean;
+  showNavigation?: boolean;
+  zoomable?: boolean;
+  initialZoom?: number;
+  minZoom?: number;
+  maxZoom?: number;
+  zoomStep?: number;
+}
+```
 
 ### `NgxRadiantItem`
 

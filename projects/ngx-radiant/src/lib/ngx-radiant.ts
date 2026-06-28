@@ -1,5 +1,15 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 export type NgxRadiantItemType = 'image' | 'video' | 'iframe';
 
@@ -11,6 +21,34 @@ export interface NgxRadiantItem {
   thumb?: string;
 }
 
+export interface NgxRadiantConfig {
+  ariaLabel?: string;
+  closeOnEscape?: boolean;
+  loop?: boolean;
+  showThumbnails?: boolean;
+  showCounter?: boolean;
+  showNavigation?: boolean;
+  zoomable?: boolean;
+  initialZoom?: number;
+  minZoom?: number;
+  maxZoom?: number;
+  zoomStep?: number;
+}
+
+const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
+  ariaLabel: 'Image gallery lightbox',
+  closeOnEscape: true,
+  loop: true,
+  showThumbnails: true,
+  showCounter: true,
+  showNavigation: true,
+  zoomable: true,
+  initialZoom: 1,
+  minZoom: 1,
+  maxZoom: 3,
+  zoomStep: 0.25,
+};
+
 @Component({
   selector: 'ngx-radiant-lightbox',
   imports: [NgClass],
@@ -20,7 +58,7 @@ export interface NgxRadiantItem {
   },
   template: `
     @if (open()) {
-      <div class="ngx-radiant" role="dialog" aria-modal="true" [attr.aria-label]="ariaLabel()">
+      <div class="ngx-radiant" role="dialog" aria-modal="true" [attr.aria-label]="resolvedAriaLabel()">
         <button
           type="button"
           class="ngx-radiant__backdrop"
@@ -30,23 +68,41 @@ export interface NgxRadiantItem {
 
         <div class="ngx-radiant__shell" (keydown)="handleKeydown($event)" tabindex="-1">
           <header class="ngx-radiant__toolbar">
-            <div class="ngx-radiant__counter" aria-live="polite">
-              {{ currentIndex() + 1 }} / {{ items().length }}
+            <div class="ngx-radiant__toolbar-start">
+              @if (showCounterControl() && canNavigate()) {
+                <div class="ngx-radiant__counter" aria-live="polite">
+                  {{ currentIndex() + 1 }} / {{ items().length }}
+                </div>
+              }
             </div>
-            <button type="button" class="ngx-radiant__button" aria-label="Close" (click)="close()">
-              ×
-            </button>
+
+            <div class="ngx-radiant__toolbar-actions">
+              @if (canZoom()) {
+                <div class="ngx-radiant__zoom-controls" aria-label="Image zoom controls">
+                  <button type="button" class="ngx-radiant__button" aria-label="Zoom out" (click)="zoomOut()">−</button>
+                  <button type="button" class="ngx-radiant__zoom-value" aria-label="Reset zoom" (click)="resetZoom()">
+                    {{ zoomPercent() }}%
+                  </button>
+                  <button type="button" class="ngx-radiant__button" aria-label="Zoom in" (click)="zoomIn()">+</button>
+                </div>
+              }
+
+              <button type="button" class="ngx-radiant__button" aria-label="Close" (click)="close()">
+                ×
+              </button>
+            </div>
           </header>
 
-          <button
-            type="button"
-            class="ngx-radiant__nav ngx-radiant__nav--prev"
-            aria-label="Previous item"
-            [disabled]="!canNavigate()"
-            (click)="previous()"
-          >
-            ‹
-          </button>
+          @if (showNavigationControl() && canNavigate()) {
+            <button
+              type="button"
+              class="ngx-radiant__nav ngx-radiant__nav--prev"
+              aria-label="Previous item"
+              (click)="previous()"
+            >
+              ‹
+            </button>
+          }
 
           <figure class="ngx-radiant__stage">
             @switch (currentItem().type ?? 'image') {
@@ -54,14 +110,23 @@ export interface NgxRadiantItem {
                 <video class="ngx-radiant__media" [src]="currentItem().src" controls playsinline></video>
               }
               @case ('iframe') {
-                <iframe class="ngx-radiant__frame" [src]="currentItem().src" title="Ngx Radiant content"></iframe>
+                <iframe
+                  class="ngx-radiant__frame"
+                  [src]="trustedFrameSrc()"
+                  title="Ngx Radiant embedded content"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                ></iframe>
               }
               @default {
                 <img
                   class="ngx-radiant__media"
+                  [style.transform]="zoomTransform()"
+                  [class.ngx-radiant__media--zoomed]="zoomLevel() > 1"
                   [src]="currentItem().src"
                   [alt]="currentItem().alt ?? currentItem().caption ?? ''"
                   draggable="false"
+                  (dblclick)="toggleZoom()"
                 />
               }
             }
@@ -71,17 +136,18 @@ export interface NgxRadiantItem {
             }
           </figure>
 
-          <button
-            type="button"
-            class="ngx-radiant__nav ngx-radiant__nav--next"
-            aria-label="Next item"
-            [disabled]="!canNavigate()"
-            (click)="next()"
-          >
-            ›
-          </button>
+          @if (showNavigationControl() && canNavigate()) {
+            <button
+              type="button"
+              class="ngx-radiant__nav ngx-radiant__nav--next"
+              aria-label="Next item"
+              (click)="next()"
+            >
+              ›
+            </button>
+          }
 
-          @if (showThumbnails() && items().length > 1) {
+          @if (resolvedShowThumbnails() && items().length > 1) {
             <footer class="ngx-radiant__thumbs" aria-label="Lightbox thumbnails">
               @for (item of items(); track item.src; let index = $index) {
                 <button
@@ -145,8 +211,25 @@ export interface NgxRadiantItem {
       gap: 1rem;
     }
 
+    .ngx-radiant__toolbar-start,
+    .ngx-radiant__toolbar-actions,
+    .ngx-radiant__zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ngx-radiant__toolbar-start {
+      min-width: 0;
+    }
+
+    .ngx-radiant__toolbar-actions {
+      margin-left: auto;
+    }
+
     .ngx-radiant__counter,
     .ngx-radiant__button,
+    .ngx-radiant__zoom-value,
     .ngx-radiant__nav {
       border: 1px solid rgb(255 255 255 / 18%);
       border-radius: 999px;
@@ -156,7 +239,8 @@ export interface NgxRadiantItem {
       backdrop-filter: blur(14px);
     }
 
-    .ngx-radiant__counter {
+    .ngx-radiant__counter,
+    .ngx-radiant__zoom-value {
       padding: 0.55rem 0.9rem;
       font-size: 0.86rem;
       letter-spacing: 0.08em;
@@ -164,6 +248,7 @@ export interface NgxRadiantItem {
     }
 
     .ngx-radiant__button,
+    .ngx-radiant__zoom-value,
     .ngx-radiant__nav {
       cursor: pointer;
       transition:
@@ -175,8 +260,12 @@ export interface NgxRadiantItem {
     .ngx-radiant__button {
       width: 2.6rem;
       height: 2.6rem;
-      font-size: 1.6rem;
+      font-size: 1.35rem;
       line-height: 1;
+    }
+
+    .ngx-radiant__zoom-value {
+      min-width: 4.4rem;
     }
 
     .ngx-radiant__nav {
@@ -189,15 +278,11 @@ export interface NgxRadiantItem {
     }
 
     .ngx-radiant__button:hover,
-    .ngx-radiant__nav:hover:not(:disabled),
+    .ngx-radiant__zoom-value:hover,
+    .ngx-radiant__nav:hover,
     .ngx-radiant__thumb:hover {
       transform: translateY(-1px);
       background: rgb(30 41 59 / 86%);
-    }
-
-    .ngx-radiant__nav:disabled {
-      cursor: default;
-      opacity: 0.4;
     }
 
     .ngx-radiant__stage {
@@ -205,6 +290,7 @@ export interface NgxRadiantItem {
       grid-row: 2;
       display: grid;
       place-items: center;
+      overflow: hidden;
       min-width: 0;
       min-height: 0;
       margin: 0;
@@ -218,6 +304,15 @@ export interface NgxRadiantItem {
       border-radius: 1.25rem;
       background: #020617;
       box-shadow: 0 28px 80px rgb(0 0 0 / 42%);
+    }
+
+    .ngx-radiant__media {
+      transform-origin: center center;
+      transition: transform 180ms ease;
+    }
+
+    .ngx-radiant__media--zoomed {
+      cursor: zoom-out;
     }
 
     .ngx-radiant__frame {
@@ -280,6 +375,15 @@ export interface NgxRadiantItem {
         grid-template-columns: 1fr 1fr;
       }
 
+      .ngx-radiant__toolbar {
+        align-items: flex-start;
+      }
+
+      .ngx-radiant__toolbar-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
       .ngx-radiant__stage {
         grid-column: 1 / -1;
       }
@@ -305,10 +409,18 @@ export interface NgxRadiantItem {
 })
 export class NgxRadiantLightbox {
   readonly items = input<NgxRadiantItem[]>([]);
-  readonly ariaLabel = input('Image gallery lightbox');
-  readonly closeOnEscape = input(true);
-  readonly loop = input(true);
-  readonly showThumbnails = input(true);
+  readonly config = input<NgxRadiantConfig | null>(null);
+  readonly ariaLabel = input<string | undefined>(undefined);
+  readonly closeOnEscape = input<boolean | undefined>(undefined);
+  readonly loop = input<boolean | undefined>(undefined);
+  readonly showThumbnails = input<boolean | undefined>(undefined);
+  readonly showCounter = input<boolean | undefined>(undefined);
+  readonly showNavigation = input<boolean | undefined>(undefined);
+  readonly zoomable = input<boolean | undefined>(undefined);
+  readonly initialZoom = input<number | undefined>(undefined);
+  readonly minZoom = input<number | undefined>(undefined);
+  readonly maxZoom = input<number | undefined>(undefined);
+  readonly zoomStep = input<number | undefined>(undefined);
 
   readonly open = input(false);
   readonly index = input(0);
@@ -317,9 +429,53 @@ export class NgxRadiantLightbox {
   readonly indexChange = output<number>();
   readonly closed = output<void>();
 
+  private readonly sanitizer = inject(DomSanitizer);
+  protected readonly zoomLevel = signal(1);
+
+  private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
+    const config = this.config() ?? {};
+    return {
+      ...NGX_RADIANT_DEFAULT_CONFIG,
+      ...config,
+      ariaLabel: this.ariaLabel() ?? config.ariaLabel ?? NGX_RADIANT_DEFAULT_CONFIG.ariaLabel,
+      closeOnEscape: this.closeOnEscape() ?? config.closeOnEscape ?? NGX_RADIANT_DEFAULT_CONFIG.closeOnEscape,
+      loop: this.loop() ?? config.loop ?? NGX_RADIANT_DEFAULT_CONFIG.loop,
+      showThumbnails: this.showThumbnails() ?? config.showThumbnails ?? NGX_RADIANT_DEFAULT_CONFIG.showThumbnails,
+      showCounter: this.showCounter() ?? config.showCounter ?? NGX_RADIANT_DEFAULT_CONFIG.showCounter,
+      showNavigation: this.showNavigation() ?? config.showNavigation ?? NGX_RADIANT_DEFAULT_CONFIG.showNavigation,
+      zoomable: this.zoomable() ?? config.zoomable ?? NGX_RADIANT_DEFAULT_CONFIG.zoomable,
+      initialZoom: this.initialZoom() ?? config.initialZoom ?? NGX_RADIANT_DEFAULT_CONFIG.initialZoom,
+      minZoom: this.minZoom() ?? config.minZoom ?? NGX_RADIANT_DEFAULT_CONFIG.minZoom,
+      maxZoom: this.maxZoom() ?? config.maxZoom ?? NGX_RADIANT_DEFAULT_CONFIG.maxZoom,
+      zoomStep: this.zoomStep() ?? config.zoomStep ?? NGX_RADIANT_DEFAULT_CONFIG.zoomStep,
+    };
+  });
+
   protected readonly currentIndex = computed(() => this.normalizeIndex(this.index()));
-  protected readonly currentItem = computed(() => this.items()[this.currentIndex()]);
+  protected readonly currentItem = computed(() => this.items()[this.currentIndex()] ?? { src: '' });
   protected readonly canNavigate = computed(() => this.items().length > 1);
+  protected readonly canZoom = computed(
+    () => this.resolvedConfig().zoomable && (this.currentItem().type ?? 'image') === 'image',
+  );
+  protected readonly zoomPercent = computed(() => Math.round(this.zoomLevel() * 100));
+  protected readonly zoomTransform = computed(() => `scale(${this.zoomLevel()})`);
+  protected readonly trustedFrameSrc = computed<SafeResourceUrl>(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(this.currentItem().src),
+  );
+  protected readonly resolvedAriaLabel = computed(() => this.resolvedConfig().ariaLabel);
+  protected readonly resolvedShowThumbnails = computed(() => this.resolvedConfig().showThumbnails);
+  protected readonly showCounterControl = computed(() => this.resolvedConfig().showCounter);
+  protected readonly showNavigationControl = computed(() => this.resolvedConfig().showNavigation);
+
+  constructor() {
+    effect(() => {
+      this.open();
+      this.currentIndex();
+      this.currentItem().src;
+      const config = this.resolvedConfig();
+      this.zoomLevel.set(this.clampZoom(config.initialZoom));
+    });
+  }
 
   openAt(index: number): void {
     this.indexChange.emit(this.normalizeIndex(index));
@@ -349,27 +505,75 @@ export class NgxRadiantLightbox {
     }
 
     const itemCount = this.items().length;
-    const nextIndex = this.loop()
+    const nextIndex = this.resolvedConfig().loop
       ? (index + itemCount) % itemCount
       : Math.min(Math.max(index, 0), itemCount - 1);
 
     this.indexChange.emit(nextIndex);
   }
 
+  zoomIn(): void {
+    if (!this.canZoom()) {
+      return;
+    }
+
+    this.zoomLevel.update((zoom) => this.clampZoom(zoom + this.resolvedConfig().zoomStep));
+  }
+
+  zoomOut(): void {
+    if (!this.canZoom()) {
+      return;
+    }
+
+    this.zoomLevel.update((zoom) => this.clampZoom(zoom - this.resolvedConfig().zoomStep));
+  }
+
+  resetZoom(): void {
+    this.zoomLevel.set(this.clampZoom(this.resolvedConfig().initialZoom));
+  }
+
+  toggleZoom(): void {
+    if (!this.canZoom()) {
+      return;
+    }
+
+    this.zoomLevel.set(this.zoomLevel() > this.resolvedConfig().minZoom ? this.resolvedConfig().minZoom : this.resolvedConfig().maxZoom);
+  }
+
   handleKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && this.closeOnEscape()) {
+    if (event.key === 'Escape' && this.resolvedConfig().closeOnEscape) {
       event.preventDefault();
       this.close();
+      return;
     }
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
       this.next();
+      return;
     }
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
       this.previous();
+      return;
+    }
+
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault();
+      this.zoomIn();
+      return;
+    }
+
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      this.zoomOut();
+      return;
+    }
+
+    if (event.key === '0') {
+      event.preventDefault();
+      this.resetZoom();
     }
   }
 
@@ -380,5 +584,12 @@ export class NgxRadiantLightbox {
     }
 
     return Math.min(Math.max(Math.trunc(index) || 0, 0), itemCount - 1);
+  }
+
+  private clampZoom(zoom: number): number {
+    const config = this.resolvedConfig();
+    const minZoom = Math.max(config.minZoom, 0.1);
+    const maxZoom = Math.max(config.maxZoom, minZoom);
+    return Math.min(Math.max(Number.isFinite(zoom) ? zoom : config.initialZoom, minZoom), maxZoom);
   }
 }

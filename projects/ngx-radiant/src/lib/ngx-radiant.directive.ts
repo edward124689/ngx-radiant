@@ -12,7 +12,7 @@ import {
   input,
 } from '@angular/core';
 
-import { NgxRadiantItem, NgxRadiantItemType, NgxRadiantLightbox } from './ngx-radiant';
+import { NgxRadiantConfig, NgxRadiantItem, NgxRadiantItemType, NgxRadiantLightbox } from './ngx-radiant';
 
 interface NgxRadiantSubscription {
   unsubscribe(): void;
@@ -30,10 +30,11 @@ export class NgxRadiantDirective {
   readonly radiantAlt = input<string | undefined>(undefined);
   readonly radiantCaption = input<string | undefined>(undefined);
   readonly radiantThumb = input<string | undefined>(undefined);
-  readonly radiantAriaLabel = input('Image gallery lightbox');
-  readonly radiantCloseOnEscape = input(true);
-  readonly radiantLoop = input(true);
-  readonly radiantShowThumbnails = input(true);
+  readonly radiantAriaLabel = input<string | undefined>(undefined);
+  readonly radiantConfig = input<NgxRadiantConfig | null>(null);
+  readonly radiantCloseOnEscape = input<boolean | undefined>(undefined);
+  readonly radiantLoop = input<boolean | undefined>(undefined);
+  readonly radiantShowThumbnails = input<boolean | undefined>(undefined);
 
   private readonly appRef = inject(ApplicationRef);
   private readonly environmentInjector = inject(EnvironmentInjector);
@@ -107,6 +108,7 @@ export class NgxRadiantDirective {
     lightboxRef.setInput('items', items);
     lightboxRef.setInput('index', this.activeIndex);
     lightboxRef.setInput('open', open);
+    lightboxRef.setInput('config', this.radiantConfig());
     lightboxRef.setInput('ariaLabel', this.radiantAriaLabel());
     lightboxRef.setInput('closeOnEscape', this.radiantCloseOnEscape());
     lightboxRef.setInput('loop', this.radiantLoop());

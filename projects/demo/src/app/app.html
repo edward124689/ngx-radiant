@@ -7,7 +7,7 @@
         A polished, lightweight lightbox foundation for image galleries and media previews.
       </p>
       <div class="hero__actions">
-        <button type="button" class="primary-action" [ngxRadiant]="galleryItems" [radiantIndex]="0">
+        <button type="button" class="primary-action" [ngxRadiant]="galleryItems" [radiantConfig]="compactConfig" [radiantIndex]="0">
           Open directive gallery
         </button>
         <a class="secondary-action" href="https://github.com/edward124689/ngx-radiant" target="_blank" rel="noreferrer">
@@ -20,6 +20,7 @@
       type="button"
       class="hero-card"
       [ngxRadiant]="galleryItems"
+      [radiantConfig]="compactConfig"
       [radiantIndex]="1"
       aria-label="Open featured lightbox preview"
     >
@@ -65,6 +66,7 @@
           type="button"
           class="collage-trigger"
           [ngxRadiant]="galleryItems"
+          [radiantConfig]="compactConfig"
           [radiantIndex]="0"
           aria-label="Open the multi-image lightbox from the preview collage"
         >
@@ -80,7 +82,7 @@
           <p>One button opens all landscape items with counter, captions, thumbnails, and keyboard navigation.</p>
         </div>
 
-        <button type="button" class="demo-trigger" [ngxRadiant]="galleryItems" [radiantIndex]="0">
+        <button type="button" class="demo-trigger" [ngxRadiant]="galleryItems" [radiantConfig]="compactConfig" [radiantIndex]="0">
           Open multi-image gallery
         </button>
 
@@ -124,9 +126,47 @@
     </div>
   </section>
 
+
+  <section class="media-demo" aria-labelledby="media-demo-title">
+    <div class="section-heading">
+      <p class="eyebrow">Media support</p>
+      <h2 id="media-demo-title">Zoomable images and embedded iframe content</h2>
+      <p>
+        Image items expose zoom controls. Iframe items such as YouTube embeds use the same overlay while keeping
+        navigation and counters hidden when only one item is present.
+      </p>
+    </div>
+
+    <div class="media-demo__grid">
+      <button
+        type="button"
+        class="media-demo-card"
+        [ngxRadiant]="singleImage"
+        [radiantConfig]="{ zoomStep: 0.5, maxZoom: 3, showCounter: false }"
+        radiantAlt="Aurora lights reflected over an alpine mountain lake"
+        radiantCaption="Zoom controls — use +, −, 0, or double-click the image."
+        aria-label="Open zoomable image demo"
+      >
+        <span>Zoom image</span>
+        <strong>+, −, 0 keyboard shortcuts</strong>
+      </button>
+
+      <button
+        type="button"
+        class="media-demo-card media-demo-card--iframe"
+        [ngxRadiant]="iframeItems"
+        [radiantConfig]="{ showCounter: false, showNavigation: false, zoomable: false }"
+        aria-label="Open YouTube iframe demo"
+      >
+        <span>Iframe / YouTube</span>
+        <strong>Embedded media preview</strong>
+      </button>
+    </div>
+  </section>
+
   <section class="gallery-strip" aria-label="Demo gallery thumbnails">
     @for (item of galleryItems; track item.src; let index = $index) {
-      <button type="button" class="gallery-tile" [ngxRadiant]="galleryItems" [radiantIndex]="index">
+      <button type="button" class="gallery-tile" [ngxRadiant]="galleryItems" [radiantConfig]="compactConfig" [radiantIndex]="index">
         <img [src]="item.thumb" [alt]="item.alt ?? ''" />
         <span>{{ item.caption }}</span>
       </button>
