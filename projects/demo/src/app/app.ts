@@ -36,12 +36,28 @@ export class App {
     imageErrorText: 'Demo fallback: this image could not be loaded.',
   };
 
+  protected readonly closeBehaviorConfig: NgxRadiantConfig = {
+    closeOnBackdrop: false,
+    showCloseButton: true,
+    showCounter: false,
+    showNavigation: false,
+    showThumbnails: false,
+  };
+
   protected readonly iframeItems: NgxRadiantItem[] = [
     {
       src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
       type: 'iframe',
       caption: 'Iframe support — YouTube embeds render inside the same Radiant overlay.',
       thumb: 'demo-art/canyon-prism.png',
+    },
+  ];
+
+  protected readonly closeBehaviorItems: NgxRadiantItem[] = [
+    {
+      src: 'demo-art/bioluminescent-coast.png',
+      alt: 'Bioluminescent coast static backdrop demo',
+      caption: 'Close behavior — backdrop clicks are disabled, while Escape and the close button still work.',
     },
   ];
 

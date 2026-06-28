@@ -181,6 +181,59 @@ describe('NgxRadiantLightbox', () => {
     expect(emittedOpenStates).toEqual([false]);
   });
 
+  it('emits close changes on backdrop click by default', () => {
+    const emittedOpenStates: boolean[] = [];
+    component.openChange.subscribe((open) => emittedOpenStates.push(open));
+
+    const backdrop = fixture.nativeElement.querySelector('.ngx-radiant__backdrop') as HTMLButtonElement;
+    backdrop.click();
+
+    expect(emittedOpenStates).toEqual([false]);
+  });
+
+  it('does not close on backdrop click when disabled by config', () => {
+    const emittedOpenStates: boolean[] = [];
+    component.openChange.subscribe((open) => emittedOpenStates.push(open));
+    fixture.componentRef.setInput('config', { closeOnBackdrop: false });
+    fixture.detectChanges();
+
+    const backdrop = fixture.nativeElement.querySelector('.ngx-radiant__backdrop') as HTMLButtonElement;
+    backdrop.click();
+
+    expect(emittedOpenStates).toEqual([]);
+    expect(backdrop.classList.contains('ngx-radiant__backdrop--static')).toBe(true);
+    expect(backdrop.getAttribute('aria-hidden')).toBe('true');
+    expect(backdrop.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('lets the direct closeOnBackdrop input override config', () => {
+    const emittedOpenStates: boolean[] = [];
+    component.openChange.subscribe((open) => emittedOpenStates.push(open));
+    fixture.componentRef.setInput('config', { closeOnBackdrop: false });
+    fixture.componentRef.setInput('closeOnBackdrop', true);
+    fixture.detectChanges();
+
+    const backdrop = fixture.nativeElement.querySelector('.ngx-radiant__backdrop') as HTMLButtonElement;
+    backdrop.click();
+
+    expect(emittedOpenStates).toEqual([false]);
+  });
+
+  it('hides the close button when disabled by config', () => {
+    fixture.componentRef.setInput('config', { showCloseButton: false });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__button--close')).toBeNull();
+  });
+
+  it('lets the direct showCloseButton input override config', () => {
+    fixture.componentRef.setInput('config', { showCloseButton: false });
+    fixture.componentRef.setInput('showCloseButton', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__button--close')).toBeTruthy();
+  });
+
   it('hides counter and navigation controls for a single item', () => {
     fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
     fixture.componentRef.setInput('index', 0);

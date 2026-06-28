@@ -32,6 +32,7 @@ describe('App', () => {
     expect(compiled.querySelector('.directive-card--single')?.textContent).toContain('Single-image directive');
     expect(compiled.querySelector('.media-demo')?.textContent).toContain('Iframe / YouTube');
     expect(compiled.querySelector('.media-demo')?.textContent).toContain('Loading / error');
+    expect(compiled.querySelector('.media-demo')?.textContent).toContain('Close behavior');
   });
 
 
@@ -89,6 +90,25 @@ describe('App', () => {
     expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
     expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
     expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image direct image click');
+  });
+
+  it('opens the close behavior demo without closing on backdrop click', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.media-demo-card--close')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const backdrop = document.querySelector('.ngx-radiant__backdrop') as HTMLButtonElement | null;
+    backdrop?.click();
+    fixture.detectChanges();
+
+    expect(document.querySelector('.ngx-radiant')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__backdrop--static')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__button--close')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('backdrop clicks are disabled');
   });
 
   it('opens the image error fallback demo with friendly fallback copy', async () => {

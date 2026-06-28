@@ -37,6 +37,8 @@ export interface NgxRadiantItem {
 export interface NgxRadiantConfig {
   ariaLabel?: string;
   closeOnEscape?: boolean;
+  closeOnBackdrop?: boolean;
+  showCloseButton?: boolean;
   loop?: boolean;
   showThumbnails?: boolean;
   showCounter?: boolean;
@@ -73,6 +75,8 @@ export interface NgxRadiantConfig {
 const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   ariaLabel: 'Image gallery lightbox',
   closeOnEscape: true,
+  closeOnBackdrop: true,
+  showCloseButton: true,
   loop: true,
   showThumbnails: true,
   showCounter: true,
@@ -122,8 +126,11 @@ let previousBodyOverflow: string | null = null;
         <button
           type="button"
           class="ngx-radiant__backdrop"
-          aria-label="Close lightbox"
-          (click)="close()"
+          [attr.aria-label]="backdropAriaLabel()"
+          [attr.aria-hidden]="backdropAriaHidden()"
+          [attr.tabindex]="backdropTabIndex()"
+          [class.ngx-radiant__backdrop--static]="backdropStatic()"
+          (click)="handleBackdropClick()"
         ></button>
 
         <div #shell class="ngx-radiant__shell" (keydown)="handleKeydown($event)" tabindex="-1">
@@ -221,8 +228,8 @@ let previousBodyOverflow: string | null = null;
                 </button>
               }
 
-              @if (toolbarActionEnabled('close')) {
-                <button type="button" class="ngx-radiant__button" aria-label="Close" (click)="close()">
+              @if (showCloseButtonControl()) {
+                <button type="button" class="ngx-radiant__button ngx-radiant__button--close" aria-label="Close" (click)="close()">
                   <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M6 6l12 12"></path>
                     <path d="M18 6 6 18"></path>
@@ -363,6 +370,10 @@ let previousBodyOverflow: string | null = null;
       border: 0;
       background: color-mix(in srgb, #020617 88%, transparent);
       cursor: zoom-out;
+    }
+
+    .ngx-radiant__backdrop--static {
+      cursor: default;
     }
 
     .ngx-radiant__shell {
@@ -701,6 +712,8 @@ export class NgxRadiantLightbox {
   readonly config = input<NgxRadiantConfig | null>(null);
   readonly ariaLabel = input<string | undefined>(undefined);
   readonly closeOnEscape = input<boolean | undefined>(undefined);
+  readonly closeOnBackdrop = input<boolean | undefined>(undefined);
+  readonly showCloseButton = input<boolean | undefined>(undefined);
   readonly loop = input<boolean | undefined>(undefined);
   readonly showThumbnails = input<boolean | undefined>(undefined);
   readonly showCounter = input<boolean | undefined>(undefined);
@@ -771,6 +784,10 @@ export class NgxRadiantLightbox {
       ...config,
       ariaLabel: this.ariaLabel() ?? config.ariaLabel ?? NGX_RADIANT_DEFAULT_CONFIG.ariaLabel,
       closeOnEscape: this.closeOnEscape() ?? config.closeOnEscape ?? NGX_RADIANT_DEFAULT_CONFIG.closeOnEscape,
+      closeOnBackdrop:
+        this.closeOnBackdrop() ?? config.closeOnBackdrop ?? NGX_RADIANT_DEFAULT_CONFIG.closeOnBackdrop,
+      showCloseButton:
+        this.showCloseButton() ?? config.showCloseButton ?? NGX_RADIANT_DEFAULT_CONFIG.showCloseButton,
       loop: this.loop() ?? config.loop ?? NGX_RADIANT_DEFAULT_CONFIG.loop,
       showThumbnails: this.showThumbnails() ?? config.showThumbnails ?? NGX_RADIANT_DEFAULT_CONFIG.showThumbnails,
       showCounter: this.showCounter() ?? config.showCounter ?? NGX_RADIANT_DEFAULT_CONFIG.showCounter,
@@ -834,6 +851,15 @@ export class NgxRadiantLightbox {
   protected readonly showAnyZoomAction = computed(() =>
     this.toolbarActionEnabled('zoomOut') || this.toolbarActionEnabled('resetZoom') || this.toolbarActionEnabled('zoomIn'),
   );
+  protected readonly showCloseButtonControl = computed(() =>
+    this.resolvedConfig().showCloseButton && this.toolbarActionEnabled('close'),
+  );
+  protected readonly backdropStatic = computed(() => !this.resolvedConfig().closeOnBackdrop);
+  protected readonly backdropAriaLabel = computed(() =>
+    this.resolvedConfig().closeOnBackdrop ? 'Close lightbox' : 'Lightbox backdrop',
+  );
+  protected readonly backdropAriaHidden = computed(() => (this.resolvedConfig().closeOnBackdrop ? null : 'true'));
+  protected readonly backdropTabIndex = computed(() => (this.resolvedConfig().closeOnBackdrop ? null : -1));
   protected readonly canToggleFullscreen = computed(() =>
     this.toolbarActionEnabled('fullscreen') &&
     this.resolvedConfig().fullscreen &&
@@ -907,6 +933,14 @@ export class NgxRadiantLightbox {
     this.restorePreviousFocus();
     this.openChange.emit(false);
     this.closed.emit();
+  }
+
+  handleBackdropClick(): void {
+    if (!this.resolvedConfig().closeOnBackdrop) {
+      return;
+    }
+
+    this.close();
   }
 
   next(): void {

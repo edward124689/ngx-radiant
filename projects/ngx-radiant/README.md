@@ -60,6 +60,8 @@ export class GalleryComponent {
     preloadImages: true,
     showImageLoader: true,
     imageErrorText: 'Could not load this image.',
+    closeOnBackdrop: false,
+    showCloseButton: true,
     showFullscreenButton: true,
     showDownload: true,
     showOpenOriginal: true,
@@ -186,6 +188,8 @@ Download and open-original actions only run for relative URLs or `http:`/`https:
 | `config` | `NgxRadiantConfig` | `null` | Shared config object for controls, zoom, and UI visibility. |
 | `ariaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. Overrides `config.ariaLabel`. |
 | `closeOnEscape` | `boolean` | `true` | Close the lightbox when Escape is pressed. Overrides `config.closeOnEscape`. |
+| `closeOnBackdrop` | `boolean` | `true` | Close the lightbox when the backdrop is clicked. Overrides `config.closeOnBackdrop`. |
+| `showCloseButton` | `boolean` | `true` | Render the close toolbar button when the `close` toolbar action is enabled. Overrides `config.showCloseButton`. |
 | `loop` | `boolean` | `true` | Wrap navigation at the first/last item. Overrides `config.loop`. |
 | `showThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. Overrides `config.showThumbnails`. |
 | `showCounter` | `boolean` | `true` | Render the counter when there is more than one item. Overrides `config.showCounter`. |
@@ -247,6 +251,8 @@ Directive users can opt out of background scroll locking through the shared conf
 interface NgxRadiantConfig {
   ariaLabel?: string;
   closeOnEscape?: boolean;
+  closeOnBackdrop?: boolean;
+  showCloseButton?: boolean;
   loop?: boolean;
   showThumbnails?: boolean;
   showCounter?: boolean;
