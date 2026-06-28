@@ -54,6 +54,8 @@ export interface NgxRadiantConfig {
   lazyLoad?: boolean;
   preloadImages?: boolean;
   preloadRadius?: number;
+  showImageLoader?: boolean;
+  imageErrorText?: string;
   toolbarActions?: NgxRadiantToolbarAction[];
   fullscreen?: boolean;
   showFullscreenButton?: boolean;
@@ -88,6 +90,8 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   lazyLoad: true,
   preloadImages: true,
   preloadRadius: 1,
+  showImageLoader: true,
+  imageErrorText: 'Image failed to load',
   toolbarActions: ['zoomOut', 'resetZoom', 'zoomIn', 'fullscreen', 'download', 'openOriginal', 'close'],
   fullscreen: true,
   showFullscreenButton: true,
@@ -270,6 +274,7 @@ let previousBodyOverflow: string | null = null;
                   [style.transform]="zoomTransform()"
                   [class.ngx-radiant__media--zoomed]="zoomLevel() > 1"
                   [class.ngx-radiant__media--dragging]="dragging()"
+                  [class.ngx-radiant__media--hidden]="imageErrored()"
                   [src]="currentItem().src"
                   [alt]="currentItem().alt ?? currentItem().caption ?? ''"
                   [attr.loading]="mainImageLoading()"
@@ -281,7 +286,20 @@ let previousBodyOverflow: string | null = null;
                   (pointerup)="endPan($event)"
                   (pointercancel)="endPan($event)"
                   (lostpointercapture)="endPan($event)"
+                  (load)="handleImageLoad()"
+                  (error)="handleImageError()"
                 />
+                @if (showImageLoaderControl()) {
+                  <div class="ngx-radiant__image-state ngx-radiant__image-state--loading" role="status" aria-live="polite">
+                    <span class="ngx-radiant__spinner" aria-hidden="true"></span>
+                    <span>Loading image…</span>
+                  </div>
+                }
+                @if (imageErrored()) {
+                  <div class="ngx-radiant__image-state ngx-radiant__image-state--error" role="alert">
+                    {{ resolvedImageErrorText() }}
+                  </div>
+                }
               }
             }
 
@@ -492,12 +510,19 @@ let previousBodyOverflow: string | null = null;
       grid-column: 2;
       grid-row: 2;
       display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
       place-items: center;
       overflow: hidden;
       min-width: 0;
       min-height: 0;
       margin: 0;
       touch-action: pan-y;
+    }
+
+    .ngx-radiant__media,
+    .ngx-radiant__frame,
+    .ngx-radiant__image-state {
+      grid-area: 1 / 1;
     }
 
     .ngx-radiant__media,
@@ -512,7 +537,54 @@ let previousBodyOverflow: string | null = null;
 
     .ngx-radiant__media {
       transform-origin: center center;
-      transition: transform 180ms ease;
+      transition:
+        transform 180ms ease,
+        opacity 180ms ease;
+    }
+
+    .ngx-radiant__media--hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ngx-radiant__image-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      border: 1px solid rgb(255 255 255 / 16%);
+      border-radius: 999px;
+      background: rgb(15 23 42 / 76%);
+      color: rgb(226 232 240);
+      padding: 0.75rem 1rem;
+      box-shadow: 0 20px 60px rgb(0 0 0 / 32%);
+      backdrop-filter: blur(14px);
+    }
+
+    .ngx-radiant__image-state--loading,
+    .ngx-radiant__image-state--error {
+      grid-area: 1 / 1;
+      align-self: center;
+      justify-self: center;
+    }
+
+    .ngx-radiant__image-state--error {
+      border-color: rgb(248 113 113 / 36%);
+      color: rgb(254 226 226);
+    }
+
+    .ngx-radiant__spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgb(255 255 255 / 26%);
+      border-top-color: var(--ngx-radiant-accent, #67e8f9);
+      border-radius: 999px;
+      animation: ngx-radiant-spin 720ms linear infinite;
+    }
+
+    @keyframes ngx-radiant-spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .ngx-radiant__media--zoomed {
@@ -646,6 +718,8 @@ export class NgxRadiantLightbox {
   readonly lazyLoad = input<boolean | undefined>(undefined);
   readonly preloadImages = input<boolean | undefined>(undefined);
   readonly preloadRadius = input<number | undefined>(undefined);
+  readonly showImageLoader = input<boolean | undefined>(undefined);
+  readonly imageErrorText = input<string | undefined>(undefined);
   readonly toolbarActions = input<NgxRadiantToolbarAction[] | undefined>(undefined);
   readonly fullscreen = input<boolean | undefined>(undefined);
   readonly showFullscreenButton = input<boolean | undefined>(undefined);
@@ -677,6 +751,8 @@ export class NgxRadiantLightbox {
   protected readonly panY = signal(0);
   protected readonly dragging = signal(false);
   protected readonly isFullscreen = signal(false);
+  protected readonly imageLoading = signal(false);
+  protected readonly imageErrored = signal(false);
   private dragStart: { pointerId: number; x: number; y: number; panX: number; panY: number } | null = null;
   private gestureStart: { pointerId: number; x: number; y: number; time: number } | null = null;
   private readonly activePointers = new Map<number, { x: number; y: number }>();
@@ -712,6 +788,8 @@ export class NgxRadiantLightbox {
       lazyLoad: this.lazyLoad() ?? config.lazyLoad ?? NGX_RADIANT_DEFAULT_CONFIG.lazyLoad,
       preloadImages: this.preloadImages() ?? config.preloadImages ?? NGX_RADIANT_DEFAULT_CONFIG.preloadImages,
       preloadRadius: this.preloadRadius() ?? config.preloadRadius ?? NGX_RADIANT_DEFAULT_CONFIG.preloadRadius,
+      showImageLoader: this.showImageLoader() ?? config.showImageLoader ?? NGX_RADIANT_DEFAULT_CONFIG.showImageLoader,
+      imageErrorText: this.imageErrorText() ?? config.imageErrorText ?? NGX_RADIANT_DEFAULT_CONFIG.imageErrorText,
       toolbarActions: this.toolbarActions() ?? config.toolbarActions ?? NGX_RADIANT_DEFAULT_CONFIG.toolbarActions,
       fullscreen: this.fullscreen() ?? config.fullscreen ?? NGX_RADIANT_DEFAULT_CONFIG.fullscreen,
       showFullscreenButton:
@@ -749,6 +827,10 @@ export class NgxRadiantLightbox {
   protected readonly showCounterControl = computed(() => this.resolvedConfig().showCounter);
   protected readonly showNavigationControl = computed(() => this.resolvedConfig().showNavigation);
   protected readonly showZoomSliderControl = computed(() => this.resolvedConfig().showZoomSlider);
+  protected readonly showImageLoaderControl = computed(() =>
+    this.resolvedConfig().showImageLoader && this.imageLoading() && !this.imageErrored(),
+  );
+  protected readonly resolvedImageErrorText = computed(() => this.resolvedConfig().imageErrorText);
   protected readonly showAnyZoomAction = computed(() =>
     this.toolbarActionEnabled('zoomOut') || this.toolbarActionEnabled('resetZoom') || this.toolbarActionEnabled('zoomIn'),
   );
@@ -804,6 +886,7 @@ export class NgxRadiantLightbox {
       const config = this.resolvedConfig();
       this.zoomLevel.set(this.clampZoom(config.initialZoom));
       this.resetPan();
+      this.resetImageState();
       this.preloadNearbyImages();
       this.attachFullscreenListener();
     });
@@ -1048,6 +1131,16 @@ export class NgxRadiantLightbox {
     if (event.pointerType !== 'mouse' && elapsed < 320 && Math.hypot(dx, dy) < 12) {
       this.handleDoubleTap(event);
     }
+  }
+
+  handleImageLoad(): void {
+    this.imageLoading.set(false);
+    this.imageErrored.set(false);
+  }
+
+  handleImageError(): void {
+    this.imageLoading.set(false);
+    this.imageErrored.set(true);
   }
 
   handleKeydown(event: KeyboardEvent): void {
@@ -1319,6 +1412,12 @@ export class NgxRadiantLightbox {
 
   private isImageGestureEnabled(): boolean {
     return this.open() && (this.currentItem().type ?? 'image') === 'image';
+  }
+
+  private resetImageState(): void {
+    const isImage = (this.currentItem().type ?? 'image') === 'image';
+    this.imageErrored.set(false);
+    this.imageLoading.set(this.open() && isImage);
   }
 
   private preloadNearbyImages(): void {

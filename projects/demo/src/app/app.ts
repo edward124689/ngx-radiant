@@ -28,12 +28,28 @@ export class App {
     iframeAllowedOrigins: ['https://www.youtube.com'],
   };
 
+  protected readonly errorStateConfig: NgxRadiantConfig = {
+    showCounter: false,
+    showNavigation: false,
+    showThumbnails: false,
+    showImageLoader: true,
+    imageErrorText: 'Demo fallback: this image could not be loaded.',
+  };
+
   protected readonly iframeItems: NgxRadiantItem[] = [
     {
       src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
       type: 'iframe',
       caption: 'Iframe support — YouTube embeds render inside the same Radiant overlay.',
       thumb: 'demo-art/canyon-prism.png',
+    },
+  ];
+
+  protected readonly brokenImageItems: NgxRadiantItem[] = [
+    {
+      src: 'demo-art/missing-radiant-image.png',
+      alt: 'Missing image fallback demo',
+      caption: 'Error fallback — Ngx Radiant can show a friendly message when an image fails to load.',
     },
   ];
 

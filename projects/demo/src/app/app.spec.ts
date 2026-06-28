@@ -31,6 +31,7 @@ describe('App', () => {
     expect(compiled.querySelector('.collage-trigger')?.textContent).toContain('3 image gallery');
     expect(compiled.querySelector('.directive-card--single')?.textContent).toContain('Single-image directive');
     expect(compiled.querySelector('.media-demo')?.textContent).toContain('Iframe / YouTube');
+    expect(compiled.querySelector('.media-demo')?.textContent).toContain('Loading / error');
   });
 
 
@@ -88,6 +89,24 @@ describe('App', () => {
     expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
     expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
     expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image direct image click');
+  });
+
+  it('opens the image error fallback demo with friendly fallback copy', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.media-demo-card--fallback')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const image = document.querySelector('.ngx-radiant__media') as HTMLImageElement | null;
+    image?.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(document.querySelector('.ngx-radiant__image-state--error')?.textContent).toContain('Demo fallback');
+    expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
+    expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
   });
 
   it('opens the iframe media demo without single-item counter or nav', async () => {

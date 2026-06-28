@@ -109,6 +109,48 @@ describe('NgxRadiantLightbox', () => {
     expect(caption.textContent?.trim()).toBe('First caption');
   });
 
+  it('shows an image loader until the current image loads', () => {
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__image-state--loading')?.textContent).toContain(
+      'Loading image',
+    );
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    image.dispatchEvent(new Event('load'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__image-state--loading')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__image-state--error')).toBeNull();
+  });
+
+  it('renders a configurable image error fallback and hides the failed image', () => {
+    fixture.componentRef.setInput('config', { imageErrorText: 'Could not load this image' });
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    image.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__image-state--loading')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__image-state--error')?.textContent).toContain(
+      'Could not load this image',
+    );
+    expect(image.classList.contains('ngx-radiant__media--hidden')).toBe(true);
+  });
+
+  it('lets the direct imageErrorText input override config', () => {
+    fixture.componentRef.setInput('config', { imageErrorText: 'Config error' });
+    fixture.componentRef.setInput('imageErrorText', 'Direct error');
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    image.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.ngx-radiant__image-state--error')?.textContent).toContain(
+      'Direct error',
+    );
+  });
+
   it('emits index changes for next and previous navigation', () => {
     const emittedIndexes: number[] = [];
     component.indexChange.subscribe((index) => emittedIndexes.push(index));

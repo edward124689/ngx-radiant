@@ -8,7 +8,7 @@ Angular 21+ lightbox gallery library with directive triggers, image zoom, thumbn
 
 ## Mobile and performance defaults
 
-Ngx Radiant enables swipe navigation, pinch zoom, double-tap zoom, lazy thumbnail loading, and nearby image preloading by default. Disable or tune them through `NgxRadiantConfig` when an app needs stricter behavior.
+Ngx Radiant enables swipe navigation, pinch zoom, double-tap zoom, lazy thumbnail loading, nearby image preloading, image loading indicators, and error fallback states by default. Disable or tune them through `NgxRadiantConfig` when an app needs stricter behavior.
 
 ## Demo
 
@@ -58,6 +58,8 @@ export class GalleryComponent {
     swipeNavigation: true,
     pinchZoom: true,
     preloadImages: true,
+    showImageLoader: true,
+    imageErrorText: 'Could not load this image.',
     showFullscreenButton: true,
     showDownload: true,
     showOpenOriginal: true,
@@ -201,6 +203,8 @@ Download and open-original actions only run for relative URLs or `http:`/`https:
 | `lazyLoad` | `boolean` | `true` | Lazy-load thumbnails and mark the active image as eager. Overrides `config.lazyLoad`. |
 | `preloadImages` | `boolean` | `true` | Preload nearby image items for faster navigation. Overrides `config.preloadImages`. |
 | `preloadRadius` | `number` | `1` | Number of previous/next image items to preload. Overrides `config.preloadRadius`. |
+| `showImageLoader` | `boolean` | `true` | Render an accessible loading indicator while the active image is loading. Overrides `config.showImageLoader`. |
+| `imageErrorText` | `string` | `Image failed to load` | Fallback message shown when the active image fails to load. Overrides `config.imageErrorText`. |
 | `toolbarActions` | `NgxRadiantToolbarAction[]` | built-in action list | Choose which toolbar actions are visible. Overrides `config.toolbarActions`. |
 | `fullscreen` | `boolean` | `true` | Enable Fullscreen API support. Overrides `config.fullscreen`. |
 | `showFullscreenButton` | `boolean` | `true` | Render the fullscreen toolbar action when supported. Overrides `config.showFullscreenButton`. |
@@ -260,6 +264,8 @@ interface NgxRadiantConfig {
   lazyLoad?: boolean;
   preloadImages?: boolean;
   preloadRadius?: number;
+  showImageLoader?: boolean;
+  imageErrorText?: string;
   toolbarActions?: NgxRadiantToolbarAction[];
   fullscreen?: boolean;
   showFullscreenButton?: boolean;

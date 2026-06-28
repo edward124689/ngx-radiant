@@ -132,7 +132,7 @@
       <p class="eyebrow">Media support</p>
       <h2 id="media-demo-title">Zoomable images and embedded iframe content</h2>
       <p>
-        Image items expose zoom controls, fullscreen, download/open-original actions, swipe gestures, pinch zoom, lazy thumbnails, and preloading. Iframe items such as YouTube embeds use the same overlay while keeping
+        Image items expose zoom controls, fullscreen, download/open-original actions, swipe gestures, pinch zoom, lazy thumbnails, preloading, loading indicators, and error fallbacks. Iframe items such as YouTube embeds use the same overlay while keeping
         navigation and counters hidden when only one item is present.
       </p>
     </div>
@@ -160,6 +160,17 @@
       >
         <span>Iframe / YouTube</span>
         <strong>Embedded media preview</strong>
+      </button>
+
+      <button
+        type="button"
+        class="media-demo-card media-demo-card--fallback"
+        [ngxRadiant]="brokenImageItems"
+        [radiantConfig]="errorStateConfig"
+        aria-label="Open image error fallback demo"
+      >
+        <span>Loading / error</span>
+        <strong>Friendly image fallback state</strong>
       </button>
     </div>
   </section>

@@ -404,7 +404,7 @@ code {
 
 .media-demo__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -431,6 +431,12 @@ code {
   background:
     linear-gradient(180deg, transparent 20%, rgb(2 6 23 / 78%) 100%),
     url('../../public/demo-art/canyon-prism.png') center / cover;
+}
+
+.media-demo-card--fallback {
+  background:
+    linear-gradient(180deg, transparent 20%, rgb(2 6 23 / 80%) 100%),
+    url('../../public/demo-art/bioluminescent-coast.png') center / cover;
 }
 
 .media-demo-card span {
