@@ -255,6 +255,7 @@ Download and open-original actions only run for relative URLs or `http:`/`https:
 | `showOpenOriginal` | `boolean` | `false` | Render the open-original toolbar action. Overrides `config.showOpenOriginal`. |
 | `trapFocus` | `boolean` | `true` | Keep Tab focus inside the open dialog. Overrides `config.trapFocus`. |
 | `restoreFocus` | `boolean` | `true` | Restore focus to the previous active element on close. Overrides `config.restoreFocus`. |
+| `lockBodyScroll` | `boolean` | `true` | Force-disable background body scrolling while the lightbox is open, then restore the previous inline overflow value on close. Overrides `config.lockBodyScroll`. |
 | `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe embeds. Overrides `config.iframeAspectRatio`. |
 | `iframeAutoplay` | `boolean` | `false` | Appends `autoplay=1` to iframe URLs. Overrides `config.iframeAutoplay`. |
 | `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` only when explicitly enabled. Overrides `config.iframeMuted`. |
@@ -307,6 +308,7 @@ interface NgxRadiantConfig {
   showOpenOriginal?: boolean;
   trapFocus?: boolean;
   restoreFocus?: boolean;
+  lockBodyScroll?: boolean;
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;

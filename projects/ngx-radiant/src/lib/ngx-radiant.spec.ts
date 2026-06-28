@@ -22,8 +22,69 @@ describe('NgxRadiantLightbox', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    fixture.destroy();
+    document.body.style.overflow = '';
+  });
+
   it('creates the lightbox', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('locks and restores body scroll while open by default', () => {
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    document.body.style.overflow = 'scroll';
+
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    expect(document.body.style.overflow).toBe('hidden');
+
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    expect(document.body.style.overflow).toBe('scroll');
+  });
+
+  it('does not lock body scroll when disabled by config', () => {
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    document.body.style.overflow = 'auto';
+
+    fixture.componentRef.setInput('config', { lockBodyScroll: false });
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+
+    expect(document.body.style.overflow).toBe('auto');
+  });
+
+  it('keeps body scroll locked until every open instance closes', () => {
+    const secondFixture = TestBed.createComponent(NgxRadiantLightbox);
+
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    document.body.style.overflow = 'visible';
+
+    try {
+      secondFixture.componentRef.setInput('items', [{ src: '/assets/second.jpg', alt: 'Second instance' }]);
+
+      fixture.componentRef.setInput('open', true);
+      fixture.detectChanges();
+      expect(document.body.style.overflow).toBe('hidden');
+
+      secondFixture.componentRef.setInput('open', true);
+      secondFixture.detectChanges();
+      expect(document.body.style.overflow).toBe('hidden');
+
+      fixture.componentRef.setInput('open', false);
+      fixture.detectChanges();
+      expect(document.body.style.overflow).toBe('hidden');
+
+      secondFixture.componentRef.setInput('open', false);
+      secondFixture.detectChanges();
+      expect(document.body.style.overflow).toBe('visible');
+    } finally {
+      secondFixture.destroy();
+    }
   });
 
   it('renders the selected item and caption', () => {

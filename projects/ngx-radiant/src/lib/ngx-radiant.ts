@@ -61,6 +61,7 @@ export interface NgxRadiantConfig {
   showOpenOriginal?: boolean;
   trapFocus?: boolean;
   restoreFocus?: boolean;
+  lockBodyScroll?: boolean;
   iframeAspectRatio?: string;
   iframeAutoplay?: boolean;
   iframeMuted?: boolean;
@@ -94,11 +95,15 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   showOpenOriginal: false,
   trapFocus: true,
   restoreFocus: true,
+  lockBodyScroll: true,
   iframeAspectRatio: '16 / 9',
   iframeAutoplay: false,
   iframeMuted: false,
   iframeAllowedOrigins: [],
 };
+
+let bodyScrollLockCount = 0;
+let previousBodyOverflow: string | null = null;
 
 @Component({
   selector: 'ngx-radiant-lightbox',
@@ -648,6 +653,7 @@ export class NgxRadiantLightbox {
   readonly showOpenOriginal = input<boolean | undefined>(undefined);
   readonly trapFocus = input<boolean | undefined>(undefined);
   readonly restoreFocus = input<boolean | undefined>(undefined);
+  readonly lockBodyScroll = input<boolean | undefined>(undefined);
   readonly iframeAspectRatio = input<string | undefined>(undefined);
   readonly iframeAutoplay = input<boolean | undefined>(undefined);
   readonly iframeMuted = input<boolean | undefined>(undefined);
@@ -679,6 +685,7 @@ export class NgxRadiantLightbox {
   private readonly preloadedImages = new Set<string>();
   private previousFocus: HTMLElement | null = null;
   private fullscreenChangeHandler: (() => void) | null = null;
+  private bodyScrollLocked = false;
   private wasOpen = false;
 
   private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
@@ -713,6 +720,7 @@ export class NgxRadiantLightbox {
       showOpenOriginal: this.showOpenOriginal() ?? config.showOpenOriginal ?? NGX_RADIANT_DEFAULT_CONFIG.showOpenOriginal,
       trapFocus: this.trapFocus() ?? config.trapFocus ?? NGX_RADIANT_DEFAULT_CONFIG.trapFocus,
       restoreFocus: this.restoreFocus() ?? config.restoreFocus ?? NGX_RADIANT_DEFAULT_CONFIG.restoreFocus,
+      lockBodyScroll: this.lockBodyScroll() ?? config.lockBodyScroll ?? NGX_RADIANT_DEFAULT_CONFIG.lockBodyScroll,
       iframeAspectRatio: this.iframeAspectRatio() ?? config.iframeAspectRatio ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAspectRatio,
       iframeAutoplay: this.iframeAutoplay() ?? config.iframeAutoplay ?? NGX_RADIANT_DEFAULT_CONFIG.iframeAutoplay,
       iframeMuted: this.iframeMuted() ?? config.iframeMuted ?? NGX_RADIANT_DEFAULT_CONFIG.iframeMuted,
@@ -760,11 +768,20 @@ export class NgxRadiantLightbox {
   protected readonly thumbnailLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'lazy' : 'eager'));
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.detachFullscreenListener());
+    this.destroyRef.onDestroy(() => {
+      this.detachFullscreenListener();
+      this.unlockBodyScroll();
+    });
 
     effect(() => {
       const isOpen = this.open();
-      this.resolvedConfig();
+      const config = this.resolvedConfig();
+
+      if (isOpen && config.lockBodyScroll) {
+        this.lockDocumentBodyScroll();
+      } else {
+        this.unlockBodyScroll();
+      }
 
       if (isOpen && !this.wasOpen) {
         this.syncDialogFocus();
@@ -1181,6 +1198,34 @@ export class NgxRadiantLightbox {
     const focusTarget = this.previousFocus;
     this.previousFocus = null;
     queueMicrotask(() => focusTarget?.focus?.());
+  }
+
+  private lockDocumentBodyScroll(): void {
+    if (!this.isBrowser || this.bodyScrollLocked || !this.document.body) {
+      return;
+    }
+
+    if (bodyScrollLockCount === 0) {
+      previousBodyOverflow = this.document.body.style.overflow;
+      this.document.body.style.overflow = 'hidden';
+    }
+
+    bodyScrollLockCount += 1;
+    this.bodyScrollLocked = true;
+  }
+
+  private unlockBodyScroll(): void {
+    if (!this.bodyScrollLocked) {
+      return;
+    }
+
+    this.bodyScrollLocked = false;
+    bodyScrollLockCount = Math.max(bodyScrollLockCount - 1, 0);
+
+    if (bodyScrollLockCount === 0 && this.isBrowser && this.document.body) {
+      this.document.body.style.overflow = previousBodyOverflow ?? '';
+      previousBodyOverflow = null;
+    }
   }
 
   private trapTabFocus(event: KeyboardEvent): void {
