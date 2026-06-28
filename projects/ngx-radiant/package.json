@@ -1,0 +1,31 @@
+{
+  "name": "ngx-radiant",
+  "version": "0.0.1",
+  "description": "A modern Angular 21 lightbox library for image galleries and media previews.",
+  "keywords": [
+    "angular",
+    "angular-21",
+    "lightbox",
+    "gallery",
+    "modal",
+    "fancybox"
+  ],
+  "author": "Edward",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edward124689/ngx-radiant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/edward124689/ngx-radiant/issues"
+  },
+  "homepage": "https://github.com/edward124689/ngx-radiant#readme",
+  "peerDependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/core": "^21.2.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}

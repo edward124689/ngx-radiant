@@ -6,5 +6,31 @@
   },
   "newProjectRoot": "projects",
   "projects": {
+    "ngx-radiant": {
+      "projectType": "library",
+      "root": "projects/ngx-radiant",
+      "sourceRoot": "projects/ngx-radiant/src",
+      "prefix": "ngx",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-radiant/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-radiant/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/ngx-radiant/tsconfig.spec.json"
+          }
+        }
+      }
+    }
   }
 }

@@ -1,39 +1,14 @@
-# Ngx Radiant
+# ngx-radiant
 
-Ngx Radiant is a modern Angular 21 lightbox library for polished image galleries and media previews. The goal is to offer a lightweight, Angular-native alternative inspired by Fancybox-style gallery experiences.
+A modern Angular 21 lightbox library for image galleries and media previews.
 
-## Status
-
-Early project scaffold. The first public API exposes a standalone lightbox component with:
-
-- Angular 21 standalone component support
-- Image and video item rendering
-- Captions, counters, thumbnails, backdrop close
-- Keyboard navigation: `Escape`, `ArrowLeft`, `ArrowRight`
-- Two-way `open` and `index` models
-- CSS custom properties for basic theming
-
-## Workspace
+## Install
 
 ```bash
-npm install
-npm run build
-npm test
+npm install ngx-radiant
 ```
 
-The publishable library lives in:
-
-```text
-projects/ngx-radiant
-```
-
-Production build output is generated at:
-
-```text
-dist/ngx-radiant
-```
-
-## Basic usage
+## Usage
 
 ```ts
 import { Component, signal } from '@angular/core';
@@ -66,7 +41,7 @@ export class GalleryComponent {
 }
 ```
 
-## API preview
+## API
 
 ### `NgxRadiantLightbox`
 
@@ -92,21 +67,9 @@ interface NgxRadiantItem {
 }
 ```
 
-## Theming
-
-```css
-:root {
-  --ngx-radiant-z-index: 1000;
-  --ngx-radiant-accent: #67e8f9;
-}
-```
-
-## Publishing checklist
+## Commands
 
 ```bash
 npm run build
-cd dist/ngx-radiant
-npm publish --access public
+npm test
 ```
-
-Do not publish until the package name, license, README, and npm account access are confirmed.
