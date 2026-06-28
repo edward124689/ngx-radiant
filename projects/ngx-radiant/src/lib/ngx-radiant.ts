@@ -130,7 +130,13 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
               @if (canZoom() && showAnyZoomAction()) {
                 <div class="ngx-radiant__zoom-controls" aria-label="Image zoom controls">
                   @if (toolbarActionEnabled('zoomOut')) {
-                    <button type="button" class="ngx-radiant__button" aria-label="Zoom out" (click)="zoomOut()">−</button>
+                    <button type="button" class="ngx-radiant__button" aria-label="Zoom out" (click)="zoomOut()">
+                      <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <circle cx="10.5" cy="10.5" r="5.75"></circle>
+                        <path d="M7.75 10.5h5.5"></path>
+                        <path d="m15 15 4.25 4.25"></path>
+                      </svg>
+                    </button>
                   }
                   @if (toolbarActionEnabled('resetZoom')) {
                     <button type="button" class="ngx-radiant__zoom-value" aria-label="Reset zoom" (click)="resetZoom()">
@@ -138,7 +144,14 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                     </button>
                   }
                   @if (toolbarActionEnabled('zoomIn')) {
-                    <button type="button" class="ngx-radiant__button" aria-label="Zoom in" (click)="zoomIn()">+</button>
+                    <button type="button" class="ngx-radiant__button" aria-label="Zoom in" (click)="zoomIn()">
+                      <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <circle cx="10.5" cy="10.5" r="5.75"></circle>
+                        <path d="M7.75 10.5h5.5"></path>
+                        <path d="M10.5 7.75v5.5"></path>
+                        <path d="m15 15 4.25 4.25"></path>
+                      </svg>
+                    </button>
                   }
                   @if (showZoomSliderControl()) {
                     <label class="ngx-radiant__zoom-slider-label">
@@ -160,21 +173,50 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
 
               @if (canToggleFullscreen()) {
                 <button type="button" class="ngx-radiant__button" [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'" (click)="toggleFullscreen()">
-                  {{ isFullscreen() ? '⤢' : '⛶' }}
+                  @if (isFullscreen()) {
+                    <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M9 3v6H3"></path>
+                      <path d="M15 3v6h6"></path>
+                      <path d="M9 21v-6H3"></path>
+                      <path d="M15 21v-6h6"></path>
+                    </svg>
+                  } @else {
+                    <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M8.5 3H3v5.5"></path>
+                      <path d="M15.5 3H21v5.5"></path>
+                      <path d="M8.5 21H3v-5.5"></path>
+                      <path d="M15.5 21H21v-5.5"></path>
+                    </svg>
+                  }
                 </button>
               }
 
               @if (canDownload()) {
-                <button type="button" class="ngx-radiant__button" aria-label="Download current item" (click)="downloadCurrent()">⇩</button>
+                <button type="button" class="ngx-radiant__button" aria-label="Download current item" (click)="downloadCurrent()">
+                  <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 3v11"></path>
+                    <path d="m7.5 10 4.5 4.5 4.5-4.5"></path>
+                    <path d="M5 18.5h14"></path>
+                  </svg>
+                </button>
               }
 
               @if (canOpenOriginal()) {
-                <button type="button" class="ngx-radiant__button" aria-label="Open original in new tab" (click)="openOriginal()">↗</button>
+                <button type="button" class="ngx-radiant__button" aria-label="Open original in new tab" (click)="openOriginal()">
+                  <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M9 7H6.5A2.5 2.5 0 0 0 4 9.5v8A2.5 2.5 0 0 0 6.5 20h8A2.5 2.5 0 0 0 17 17.5V15"></path>
+                    <path d="M13 4h7v7"></path>
+                    <path d="M11 13 20 4"></path>
+                  </svg>
+                </button>
               }
 
               @if (toolbarActionEnabled('close')) {
                 <button type="button" class="ngx-radiant__button" aria-label="Close" (click)="close()">
-                  ×
+                  <svg class="ngx-radiant__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 6l12 12"></path>
+                    <path d="M18 6 6 18"></path>
+                  </svg>
                 </button>
               }
             </div>
@@ -187,7 +229,9 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
               aria-label="Previous item"
               (click)="previous()"
             >
-              ‹
+              <svg class="ngx-radiant__icon ngx-radiant__icon--nav" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m15 5-7 7 7 7"></path>
+              </svg>
             </button>
           }
 
@@ -247,7 +291,9 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
               aria-label="Next item"
               (click)="next()"
             >
-              ›
+              <svg class="ngx-radiant__icon ngx-radiant__icon--nav" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m9 5 7 7-7 7"></path>
+              </svg>
             </button>
           }
 
@@ -386,10 +432,30 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
     }
 
     .ngx-radiant__button {
+      display: inline-grid;
+      place-items: center;
       width: 2.6rem;
       height: 2.6rem;
       font-size: 1.35rem;
       line-height: 1;
+      padding: 0;
+    }
+
+    .ngx-radiant__icon {
+      width: 1.2rem;
+      height: 1.2rem;
+      fill: none;
+      stroke: currentcolor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .ngx-radiant__icon--nav {
+      width: 1.75rem;
+      height: 1.75rem;
+      stroke-width: 2.25;
     }
 
     .ngx-radiant__zoom-value {
@@ -397,12 +463,15 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
     }
 
     .ngx-radiant__nav {
+      display: inline-grid;
+      place-items: center;
       align-self: center;
       width: 3rem;
       height: 3rem;
       border: 0;
       font-size: 2.6rem;
       line-height: 1;
+      padding: 0;
     }
 
     .ngx-radiant__button:hover,
