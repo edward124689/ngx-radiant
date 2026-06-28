@@ -2,6 +2,19 @@
 
 All notable changes to Ngx Radiant are documented in this file.
 
+## 21.1.1 - 2026-06-29
+
+### Added
+
+- Image loading state with an accessible spinner while the active image is loading.
+- Configurable image error fallback with `showImageLoader` and `imageErrorText`.
+- Configurable close behavior with `closeOnBackdrop` and `showCloseButton`.
+- Demo examples for image error fallback and static-backdrop close behavior.
+
+### Changed
+
+- README/package docs now cover loading/error states and close-behavior configuration.
+
 ## 21.1.0 - 2026-06-28
 
 ### Added

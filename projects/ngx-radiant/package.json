@@ -1,6 +1,6 @@
 {
   "name": "ngx-radiant",
-  "version": "21.1.0",
+  "version": "21.1.1",
   "description": "Angular 21+ lightbox gallery library with mobile gestures, fullscreen, downloads, toolbar controls, image zoom, lazy thumbnails, video, and iframe/YouTube embeds.",
   "keywords": [
     "angular",
