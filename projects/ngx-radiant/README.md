@@ -1,6 +1,6 @@
 # ngx-radiant
 
-A modern Angular 21 lightbox library for image galleries and media previews.
+A modern Angular 21+ lightbox library for image galleries and media previews.
 
 ## Demo
 
@@ -13,6 +13,11 @@ https://edward124689.github.io/ngx-radiant/
 ```bash
 npm install ngx-radiant
 ```
+
+## Compatibility
+
+- Library version: `21.0.0`
+- Angular compatibility: `21+`
 
 ## Component usage
 

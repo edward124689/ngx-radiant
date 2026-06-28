@@ -1,6 +1,6 @@
 # Ngx Radiant
 
-Ngx Radiant is a modern Angular 21 lightbox library for polished image galleries and media previews. The goal is to offer a lightweight, Angular-native alternative inspired by Fancybox-style gallery experiences.
+Ngx Radiant is a modern Angular 21+ lightbox library for polished image galleries and media previews. The goal is to offer a lightweight, Angular-native alternative inspired by Fancybox-style gallery experiences.
 
 ## Demo
 
@@ -17,11 +17,15 @@ npm start
 npm run build:pages
 ```
 
-## Status
+## Version and compatibility
 
-Early project scaffold. The first public API exposes:
+- Library version: `21.0.0`
+- Angular compatibility: `21+`
+- Package format: standalone Angular library with partial compilation
 
-- Angular 21 standalone component support
+## Features
+
+- Angular 21+ standalone component support
 - Directive trigger support with `[ngxRadiant]`
 - Image, video, and iframe item rendering, including YouTube embed URLs
 - Zoom in/out/reset controls for image items
