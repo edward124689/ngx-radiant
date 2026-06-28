@@ -8,6 +8,8 @@ import { NgxRadiantDirective, NgxRadiantItem } from 'ngx-radiant';
   styleUrl: './app.scss',
 })
 export class App {
+  protected readonly singleImage = 'demo-art/aurora-landscape.png';
+
   protected readonly galleryItems: NgxRadiantItem[] = [
     {
       src: 'demo-art/aurora-landscape.png',

@@ -46,6 +46,57 @@
     </article>
   </section>
 
+  <section class="directive-demo" aria-labelledby="directive-demo-title">
+    <div class="section-heading">
+      <p class="eyebrow">Directive examples</p>
+      <h2 id="directive-demo-title">Open a gallery or one image from any element</h2>
+      <p>
+        Use <code>[ngxRadiant]</code> with an array for a multi-image gallery, or pass a single image URL with
+        caption inputs for a focused preview.
+      </p>
+    </div>
+
+    <div class="directive-demo__grid">
+      <article class="directive-card directive-card--multi">
+        <div>
+          <span class="example-label">Multi-image directive</span>
+          <h3>Gallery trigger</h3>
+          <p>One button opens all landscape items with counter, captions, thumbnails, and keyboard navigation.</p>
+        </div>
+
+        <button type="button" class="demo-trigger" [ngxRadiant]="galleryItems" [radiantIndex]="0">
+          Open multi-image gallery
+        </button>
+
+        <div class="mini-strip" aria-hidden="true">
+          @for (item of galleryItems; track item.src) {
+            <img [src]="item.thumb" [alt]="" />
+          }
+        </div>
+      </article>
+
+      <article class="directive-card directive-card--single">
+        <img class="single-preview" [src]="singleImage" alt="Aurora lights reflected over an alpine mountain lake" />
+        <div>
+          <span class="example-label">Single-image directive</span>
+          <h3>Standalone image trigger</h3>
+          <p>Pass a string URL and optional metadata when you only need one image in the lightbox.</p>
+        </div>
+
+        <button
+          type="button"
+          class="demo-trigger"
+          [ngxRadiant]="singleImage"
+          radiantAlt="Aurora lights reflected over an alpine mountain lake"
+          radiantCaption="Single-image directive preview — pass a URL, alt text, and caption."
+          [radiantShowThumbnails]="false"
+        >
+          Open single image
+        </button>
+      </article>
+    </div>
+  </section>
+
   <section class="gallery-strip" aria-label="Demo gallery thumbnails">
     @for (item of galleryItems; track item.src; let index = $index) {
       <button type="button" class="gallery-tile" [ngxRadiant]="galleryItems" [radiantIndex]="index">

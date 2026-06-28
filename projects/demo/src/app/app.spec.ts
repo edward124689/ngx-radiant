@@ -26,6 +26,8 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Ngx Radiant');
     expect(compiled.querySelectorAll('.gallery-tile').length).toBe(3);
+    expect(compiled.querySelector('.directive-card--multi')?.textContent).toContain('Multi-image directive');
+    expect(compiled.querySelector('.directive-card--single')?.textContent).toContain('Single-image directive');
   });
 
   it('opens the lightbox from the hero button', async () => {
@@ -39,5 +41,19 @@ describe('App', () => {
 
     expect(document.querySelector('.ngx-radiant')).toBeTruthy();
     expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 3');
+  });
+
+  it('opens the directive single-image demo', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.directive-card--single .demo-trigger')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.querySelector('.ngx-radiant')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 1');
+    expect(document.querySelector('.ngx-radiant__caption')?.textContent).toContain('Single-image directive preview');
   });
 });
