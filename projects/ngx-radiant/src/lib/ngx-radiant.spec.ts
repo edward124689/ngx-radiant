@@ -1,3 +1,4 @@
+import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NgxRadiantLightbox } from './ngx-radiant';
@@ -571,4 +572,34 @@ describe('NgxRadiantLightbox', () => {
     expect(frame.getAttribute('src')).not.toBe('about:blank');
   });
 
+});
+
+describe('NgxRadiantLightbox browser guards', () => {
+  it('does not run browser-only focus work when rendered on the server', async () => {
+    await TestBed.resetTestingModule()
+      .configureTestingModule({
+        imports: [NgxRadiantLightbox],
+        providers: [{ provide: PLATFORM_ID, useValue: 'server' }],
+      })
+      .compileComponents();
+
+    const launcher = document.createElement('button');
+    launcher.type = 'button';
+    launcher.textContent = 'Launcher';
+    document.body.appendChild(launcher);
+    launcher.focus();
+
+    try {
+      const serverFixture = TestBed.createComponent(NgxRadiantLightbox);
+      serverFixture.componentRef.setInput('items', [{ src: '/assets/photo-1.jpg', alt: 'First photo' }]);
+      serverFixture.componentRef.setInput('open', true);
+      serverFixture.detectChanges();
+      await Promise.resolve();
+
+      expect(document.activeElement).toBe(launcher);
+      expect(serverFixture.nativeElement.querySelector('[aria-label="Enter fullscreen"]')).toBeNull();
+    } finally {
+      launcher.remove();
+    }
+  });
 });

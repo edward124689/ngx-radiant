@@ -1,5 +1,6 @@
-import { DOCUMENT, NgClass } from '@angular/common';
+import { DOCUMENT, NgClass, isPlatformBrowser } from '@angular/common';
 import {
+  PLATFORM_ID,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -662,6 +663,7 @@ export class NgxRadiantLightbox {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly zoomMedia = viewChild<ElementRef<HTMLElement>>('zoomMedia');
   private readonly shell = viewChild<ElementRef<HTMLElement>>('shell');
   protected readonly zoomLevel = signal(1);
@@ -874,7 +876,7 @@ export class NgxRadiantLightbox {
   }
 
   toggleFullscreen(): void {
-    if (!this.canToggleFullscreen()) {
+    if (!this.isBrowser || !this.canToggleFullscreen()) {
       return;
     }
 
@@ -1117,11 +1119,11 @@ export class NgxRadiantLightbox {
   }
 
   private fullscreenSupported(): boolean {
-    return typeof this.document.documentElement.requestFullscreen === 'function';
+    return this.isBrowser && typeof this.document.documentElement.requestFullscreen === 'function';
   }
 
   private attachFullscreenListener(): void {
-    if (this.fullscreenChangeHandler || typeof this.document.addEventListener !== 'function') {
+    if (!this.isBrowser || this.fullscreenChangeHandler || typeof this.document.addEventListener !== 'function') {
       return;
     }
 
@@ -1141,6 +1143,11 @@ export class NgxRadiantLightbox {
   }
 
   private exitFullscreen(): void {
+    if (!this.isBrowser) {
+      this.isFullscreen.set(false);
+      return;
+    }
+
     if (this.document.fullscreenElement === this.shell()?.nativeElement) {
       this.document.exitFullscreen?.().catch(() => undefined);
     }
@@ -1148,7 +1155,7 @@ export class NgxRadiantLightbox {
   }
 
   private syncDialogFocus(): void {
-    if (!this.open()) {
+    if (!this.isBrowser || !this.open()) {
       return;
     }
 
@@ -1166,7 +1173,7 @@ export class NgxRadiantLightbox {
   }
 
   private restorePreviousFocus(): void {
-    if (!this.resolvedConfig().restoreFocus) {
+    if (!this.isBrowser || !this.resolvedConfig().restoreFocus) {
       this.previousFocus = null;
       return;
     }
@@ -1270,7 +1277,7 @@ export class NgxRadiantLightbox {
   }
 
   private preloadNearbyImages(): void {
-    if (!this.open() || !this.resolvedConfig().preloadImages || typeof Image === 'undefined') {
+    if (!this.isBrowser || !this.open() || !this.resolvedConfig().preloadImages || typeof Image === 'undefined') {
       return;
     }
 

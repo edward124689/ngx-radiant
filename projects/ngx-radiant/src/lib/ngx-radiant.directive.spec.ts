@@ -45,6 +45,26 @@ describe('NgxRadiantDirective', () => {
     expect(image?.getAttribute('src')).toBe('/assets/photo-2.jpg');
   });
 
+
+  it('cleans up the dynamic overlay across repeated open and close cycles', async () => {
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+
+    for (let cycle = 0; cycle < 2; cycle += 1) {
+      button.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(document.querySelectorAll('ngx-radiant-overlay').length).toBe(1);
+      expect(document.querySelector('.ngx-radiant')).toBeTruthy();
+
+      document.querySelector<HTMLButtonElement>('ngx-radiant-overlay [aria-label="Close"]')?.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(document.querySelectorAll('ngx-radiant-overlay').length).toBe(0);
+    }
+  });
+
   it('supports single image shorthand', async () => {
     await TestBed.resetTestingModule()
       .configureTestingModule({

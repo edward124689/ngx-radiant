@@ -19,6 +19,15 @@ export class App {
     showOpenOriginal: true,
   };
 
+  protected readonly iframeConfig: NgxRadiantConfig = {
+    showCounter: false,
+    showNavigation: false,
+    zoomable: false,
+    iframeAspectRatio: '16 / 9',
+    iframeAutoplay: true,
+    iframeAllowedOrigins: ['https://www.youtube.com'],
+  };
+
   protected readonly iframeItems: NgxRadiantItem[] = [
     {
       src: 'https://www.youtube.com/embed/jYqX4YUzcKs',

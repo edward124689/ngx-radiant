@@ -46,6 +46,7 @@ export class NgxRadiantDirective {
   private hostElement: HTMLElement | null = null;
   private subscriptions: NgxRadiantSubscription[] = [];
   private activeIndex = 0;
+  private destroyScheduled = false;
 
   constructor() {
     this.destroyRef.onDestroy(() => this.destroyLightbox());
@@ -91,10 +92,10 @@ export class NgxRadiantDirective {
       }),
       this.lightboxRef.instance.openChange.subscribe((open) => {
         if (!open) {
-          this.destroyLightbox();
+          this.scheduleDestroyLightbox();
         }
       }),
-      this.lightboxRef.instance.closed.subscribe(() => this.destroyLightbox()),
+      this.lightboxRef.instance.closed.subscribe(() => this.scheduleDestroyLightbox()),
     ];
 
     return this.lightboxRef;
@@ -116,7 +117,21 @@ export class NgxRadiantDirective {
     lightboxRef.changeDetectorRef.detectChanges();
   }
 
+  private scheduleDestroyLightbox(): void {
+    if (this.destroyScheduled) {
+      return;
+    }
+
+    this.destroyScheduled = true;
+    queueMicrotask(() => {
+      this.destroyScheduled = false;
+      this.destroyLightbox();
+    });
+  }
+
   private destroyLightbox(): void {
+    this.destroyScheduled = false;
+
     for (const subscription of this.subscriptions) {
       subscription.unsubscribe();
     }

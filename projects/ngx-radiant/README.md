@@ -121,7 +121,7 @@ Single-image shorthand automatically hides the counter and previous/next control
 
 Iframe / YouTube example:
 
-> Iframe sources must be application-controlled. Ngx Radiant only allows `http:`/`https:` iframe URLs by default. Use `iframeAllowedOrigins` when you want a stricter allowlist. Autoplay does not enable muted mode automatically; set `iframeMuted: true` only when you want muted autoplay params.
+> Iframe sources must be application-controlled. Ngx Radiant only allows `http:`/`https:` iframe URLs by default, but empty `iframeAllowedOrigins` means any HTTP(S) origin can render. If iframe data can come from a CMS, database, API response, or user-controlled content, set `iframeAllowedOrigins` to a strict provider list such as `['https://www.youtube.com']`. Autoplay does not enable muted mode automatically; set `iframeMuted: true` only when you want muted autoplay params.
 
 ```ts
 readonly mediaItems: NgxRadiantItem[] = [
@@ -137,7 +137,12 @@ readonly mediaItems: NgxRadiantItem[] = [
 <button
   type="button"
   [ngxRadiant]="mediaItems"
-  [radiantConfig]="{ showCounter: false, showNavigation: false, zoomable: false }"
+  [radiantConfig]="{
+    showCounter: false,
+    showNavigation: false,
+    zoomable: false,
+    iframeAllowedOrigins: ['https://www.youtube.com']
+  }"
 >
   Open YouTube
 </button>

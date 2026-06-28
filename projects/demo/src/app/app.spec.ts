@@ -100,6 +100,11 @@ describe('App', () => {
     await fixture.whenStable();
 
     expect(document.querySelector('.ngx-radiant__frame')).toBeTruthy();
+    const frame = document.querySelector('.ngx-radiant__frame') as HTMLIFrameElement | null;
+    expect(frame?.getAttribute('src')).toContain('https://www.youtube.com/embed/jYqX4YUzcKs');
+    expect(frame?.getAttribute('src')).toContain('autoplay=1');
+    expect(frame?.getAttribute('src')).not.toContain('mute=1');
+    expect(frame?.style.aspectRatio).toBe('16 / 9');
     expect(document.querySelector('.ngx-radiant__counter')).toBeNull();
     expect(document.querySelector('.ngx-radiant__nav--prev')).toBeNull();
   });
