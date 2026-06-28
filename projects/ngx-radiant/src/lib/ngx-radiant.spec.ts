@@ -422,6 +422,48 @@ describe('NgxRadiantLightbox', () => {
     expect(document.activeElement).toBe(first);
   });
 
+  it('restores focus when a controlled host closes the lightbox externally', async () => {
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    await Promise.resolve();
+
+    const launcher = document.createElement('button');
+    launcher.type = 'button';
+    launcher.textContent = 'Launcher';
+    document.body.appendChild(launcher);
+    launcher.focus();
+
+    try {
+      fixture.componentRef.setInput('open', true);
+      fixture.detectChanges();
+      await Promise.resolve();
+
+      expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.ngx-radiant__shell'));
+
+      fixture.componentRef.setInput('open', false);
+      fixture.detectChanges();
+      await Promise.resolve();
+
+      expect(document.activeElement).toBe(launcher);
+    } finally {
+      launcher.remove();
+    }
+  });
+
+  it('keeps toolbar focus stable when the selected item changes', async () => {
+    await Promise.resolve();
+
+    const zoomIn = fixture.nativeElement.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
+    zoomIn.focus();
+    expect(document.activeElement).toBe(zoomIn);
+
+    fixture.componentRef.setInput('index', 1);
+    fixture.detectChanges();
+    await Promise.resolve();
+
+    expect(document.activeElement).toBe(zoomIn);
+  });
+
   it('supports config-driven UI options', () => {
     fixture.componentRef.setInput('config', {
       showCounter: false,

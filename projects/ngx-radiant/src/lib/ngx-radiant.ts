@@ -677,6 +677,7 @@ export class NgxRadiantLightbox {
   private readonly preloadedImages = new Set<string>();
   private previousFocus: HTMLElement | null = null;
   private fullscreenChangeHandler: (() => void) | null = null;
+  private wasOpen = false;
 
   private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
     const config = this.config() ?? {};
@@ -760,6 +761,24 @@ export class NgxRadiantLightbox {
     this.destroyRef.onDestroy(() => this.detachFullscreenListener());
 
     effect(() => {
+      const isOpen = this.open();
+      this.resolvedConfig();
+
+      if (isOpen && !this.wasOpen) {
+        this.syncDialogFocus();
+        this.attachFullscreenListener();
+      }
+
+      if (!isOpen && this.wasOpen) {
+        this.exitFullscreen();
+        this.resetPan();
+        this.restorePreviousFocus();
+      }
+
+      this.wasOpen = isOpen;
+    });
+
+    effect(() => {
       this.open();
       this.currentIndex();
       this.currentItem().src;
@@ -767,7 +786,6 @@ export class NgxRadiantLightbox {
       this.zoomLevel.set(this.clampZoom(config.initialZoom));
       this.resetPan();
       this.preloadNearbyImages();
-      this.syncDialogFocus();
       this.attachFullscreenListener();
     });
   }
