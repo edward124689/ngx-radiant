@@ -102,7 +102,7 @@ Single-image shorthand automatically hides the counter and previous/next control
 
 Iframe / YouTube example:
 
-> Iframe sources must be application-controlled. Ngx Radiant only allows `http:`/`https:` iframe URLs by default. Use `iframeAllowedOrigins` when you want a stricter allowlist.
+> Iframe sources must be application-controlled. Ngx Radiant only allows `http:`/`https:` iframe URLs by default. Use `iframeAllowedOrigins` when you want a stricter allowlist. Autoplay does not enable muted mode automatically; set `iframeMuted: true` only when you want muted autoplay params.
 
 ```ts
 readonly mediaItems: NgxRadiantItem[] = [
@@ -148,7 +148,7 @@ readonly mediaItems: NgxRadiantItem[] = [
 | `showZoomSlider` | `boolean` | `false` | Render a range slider for direct zoom control. Overrides `config.showZoomSlider`. |
 | `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe embeds. Overrides `config.iframeAspectRatio`. |
 | `iframeAutoplay` | `boolean` | `false` | Appends `autoplay=1` to iframe URLs. Overrides `config.iframeAutoplay`. |
-| `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` to iframe URLs for autoplay-friendly embeds. Overrides `config.iframeMuted`. |
+| `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` only when explicitly enabled. Overrides `config.iframeMuted`. |
 | `iframeAllowedOrigins` | `string[]` | `[]` | Optional iframe origin allowlist. Empty means any `http:`/`https:` origin is allowed; unsupported protocols render `about:blank`. |
 
 ### `NgxRadiantDirective`

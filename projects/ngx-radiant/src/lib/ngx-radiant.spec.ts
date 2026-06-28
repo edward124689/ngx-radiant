@@ -193,6 +193,23 @@ describe('NgxRadiantLightbox', () => {
   });
 
 
+  it('does not mute iframe autoplay unless iframeMuted is configured', () => {
+    fixture.componentRef.setInput('items', [
+      {
+        src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
+        type: 'iframe',
+      },
+    ]);
+    fixture.componentRef.setInput('config', { iframeAutoplay: true });
+    fixture.detectChanges();
+
+    const frame = fixture.nativeElement.querySelector('.ngx-radiant__frame') as HTMLIFrameElement;
+    expect(frame.getAttribute('src')).toContain('autoplay=1');
+    expect(frame.getAttribute('src')).not.toContain('mute=1');
+    expect(frame.getAttribute('src')).not.toContain('muted=1');
+  });
+
+
   it('rejects unsafe iframe protocols and origins before trusting the resource URL', () => {
     fixture.componentRef.setInput('items', [
       {
