@@ -30,12 +30,12 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1.16fr) minmax(280px, 0.84fr);
   align-items: center;
   gap: clamp(2rem, 5vw, 5rem);
   width: min(1180px, 100%);
   margin: 0 auto;
-  padding: clamp(3rem, 8vw, 7rem) 0 3rem;
+  padding: clamp(3rem, 8vw, 7rem) 0 2.7rem;
 }
 
 .eyebrow {
@@ -101,6 +101,8 @@ h1 {
 
 .hero-card {
   position: relative;
+  justify-self: end;
+  width: min(100%, 450px);
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 2rem;
@@ -119,8 +121,8 @@ h1 {
 
 .hero-card span {
   position: absolute;
-  right: 1rem;
-  bottom: 1rem;
+  right: 1.25rem;
+  bottom: 1.25rem;
   border-radius: 999px;
   padding: 0.65rem 0.9rem;
   background: rgb(2 6 23 / 72%);
@@ -175,8 +177,9 @@ h2 {
 
 .feature-grid p {
   margin: 0;
-  color: #94a3b8;
-  line-height: 1.6;
+  color: #a8b4c6;
+  font-size: 0.96rem;
+  line-height: 1.65;
   text-wrap: pretty;
 }
 
@@ -187,7 +190,11 @@ h2 {
 
 
 .directive-demo {
-  padding: 3.6rem 0 1.6rem;
+  padding: 3rem 0 1.6rem;
+}
+
+.directive-demo .section-heading {
+  max-width: 680px;
 }
 
 .section-heading {
@@ -228,8 +235,8 @@ code {
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: 1rem;
-  min-height: 500px;
+  gap: 0.95rem;
+  min-height: 470px;
   border: 1px solid rgb(255 255 255 / 10%);
   border-radius: 1.6rem;
   background:
@@ -312,8 +319,8 @@ code {
 .collage-trigger span,
 .single-preview-button span {
   position: absolute;
-  right: 0.8rem;
-  bottom: 0.8rem;
+  right: 1rem;
+  bottom: 1rem;
   border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 999px;
   background: rgb(2 6 23 / 78%);
@@ -501,5 +508,10 @@ code {
 
   .hero {
     padding-top: 2rem;
+  }
+
+  .hero-card {
+    justify-self: stretch;
+    width: 100%;
   }
 }
