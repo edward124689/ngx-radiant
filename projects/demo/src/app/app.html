@@ -7,7 +7,9 @@
         A polished, lightweight lightbox foundation for image galleries and media previews.
       </p>
       <div class="hero__actions">
-        <button type="button" class="primary-action" data-demo-open-index="0" (click)="openGallery(0)">Open demo gallery</button>
+        <button type="button" class="primary-action" [ngxRadiant]="galleryItems" [radiantIndex]="0">
+          Open directive gallery
+        </button>
         <a class="secondary-action" href="https://github.com/edward124689/ngx-radiant" target="_blank" rel="noreferrer">
           GitHub repository
         </a>
@@ -17,8 +19,8 @@
     <button
       type="button"
       class="hero-card"
-      data-demo-open-index="1"
-      (click)="openGallery(1)"
+      [ngxRadiant]="galleryItems"
+      [radiantIndex]="1"
       aria-label="Open featured lightbox preview"
     >
       <img src="demo-art/canyon-prism.png" alt="Radiant canyon preview" />
@@ -30,7 +32,7 @@
     <article>
       <span class="feature-icon">01</span>
       <h2>Standalone Angular API</h2>
-      <p>Import one component, pass typed gallery items, and control visibility with Angular model inputs.</p>
+      <p>Use either the standalone component or the trigger directive with typed gallery items.</p>
     </article>
     <article>
       <span class="feature-icon">02</span>
@@ -39,25 +41,17 @@
     </article>
     <article>
       <span class="feature-icon">03</span>
-      <h2>Package-ready</h2>
-      <p>The library builds with ng-packagr and is prepared for npm publication when ready.</p>
+      <h2>Directive triggers</h2>
+      <p>The directive can open a full gallery from any button, image, or card.</p>
     </article>
   </section>
 
   <section class="gallery-strip" aria-label="Demo gallery thumbnails">
     @for (item of galleryItems; track item.src; let index = $index) {
-      <button type="button" class="gallery-tile" [attr.data-demo-open-index]="index" (click)="openGallery(index)">
+      <button type="button" class="gallery-tile" [ngxRadiant]="galleryItems" [radiantIndex]="index">
         <img [src]="item.thumb" [alt]="item.alt ?? ''" />
         <span>{{ item.caption }}</span>
       </button>
     }
   </section>
 </main>
-
-<ngx-radiant-lightbox
-  [items]="galleryItems"
-  [open]="isOpen()"
-  (openChange)="isOpen.set($event)"
-  [index]="activeIndex()"
-  (indexChange)="activeIndex.set($event)"
-/>

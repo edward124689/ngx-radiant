@@ -19,10 +19,11 @@ npm run build:pages
 
 ## Status
 
-Early project scaffold. The first public API exposes a standalone lightbox component with:
+Early project scaffold. The first public API exposes:
 
 - Angular 21 standalone component support
-- Image and video item rendering
+- Directive trigger support with `[ngxRadiant]`
+- Image, video, and iframe item rendering
 - Captions, counters, thumbnails, backdrop close
 - Keyboard navigation: `Escape`, `ArrowLeft`, `ArrowRight`
 - Two-way-compatible `open` / `openChange` and `index` / `indexChange` bindings
@@ -49,7 +50,7 @@ Production build output is generated at:
 dist/ngx-radiant
 ```
 
-## Basic usage
+## Component usage
 
 ```ts
 import { Component, signal } from '@angular/core';
@@ -84,6 +85,55 @@ export class GalleryComponent {
 }
 ```
 
+## Directive usage
+
+Use the directive when any element should open a lightbox without manually rendering the component.
+
+```ts
+import { Component } from '@angular/core';
+import { NgxRadiantDirective, NgxRadiantItem } from 'ngx-radiant';
+
+@Component({
+  selector: 'app-gallery',
+  imports: [NgxRadiantDirective],
+  template: `
+    <button type="button" [ngxRadiant]="items" [radiantIndex]="0">
+      Open gallery
+    </button>
+
+    <img
+      src="/assets/gallery/aurora-thumb.jpg"
+      alt="Aurora thumbnail"
+      [ngxRadiant]="items"
+      [radiantIndex]="0"
+    />
+  `,
+})
+export class GalleryComponent {
+  readonly items: NgxRadiantItem[] = [
+    {
+      src: '/assets/gallery/aurora.jpg',
+      thumb: '/assets/gallery/aurora-thumb.jpg',
+      alt: 'Aurora over a mountain ridge',
+      caption: 'Aurora over a mountain ridge',
+    },
+  ];
+}
+```
+
+Single-image shorthand:
+
+```html
+<button
+  type="button"
+  ngxRadiant="/assets/gallery/aurora.jpg"
+  radiantAlt="Aurora over a mountain ridge"
+  radiantCaption="Aurora over a mountain ridge"
+>
+  Open image
+</button>
+```
+
 ## API preview
 
 ### `NgxRadiantLightbox`
@@ -97,6 +147,22 @@ export class GalleryComponent {
 | `closeOnEscape` | `boolean` | `true` | Close the lightbox when Escape is pressed. |
 | `loop` | `boolean` | `true` | Wrap navigation at the first/last item. |
 | `showThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. |
+
+### `NgxRadiantDirective`
+
+| Input | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ngxRadiant` | `NgxRadiantItem \| NgxRadiantItem[] \| string` | `null` | Item, item list, or single image URL to open. |
+| `radiantItems` | `NgxRadiantItem[]` | `null` | Optional explicit gallery items. |
+| `radiantIndex` | `number` | `0` | Initial item index. |
+| `radiantAlt` | `string` | `undefined` | Alt text for string shorthand. |
+| `radiantCaption` | `string` | `undefined` | Caption for string shorthand. |
+| `radiantThumb` | `string` | `undefined` | Thumbnail for string shorthand. |
+| `radiantType` | `'image' \| 'video' \| 'iframe'` | `undefined` | Media type for string shorthand. |
+| `radiantAriaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. |
+| `radiantCloseOnEscape` | `boolean` | `true` | Close the overlay when Escape is pressed. |
+| `radiantLoop` | `boolean` | `true` | Wrap navigation at the first/last item. |
+| `radiantShowThumbnails` | `boolean` | `true` | Render the thumbnail strip when possible. |
 
 ### `NgxRadiantItem`
 

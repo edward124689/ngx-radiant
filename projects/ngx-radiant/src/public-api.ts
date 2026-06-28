@@ -3,3 +3,4 @@
  */
 
 export * from './lib/ngx-radiant';
+export * from './lib/ngx-radiant.directive';

@@ -8,6 +8,10 @@ describe('App', () => {
     }).compileComponents();
   });
 
+  afterEach(() => {
+    document.querySelectorAll('ngx-radiant-overlay').forEach((element) => element.remove());
+  });
+
   it('creates the demo app', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -33,7 +37,7 @@ describe('App', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(compiled.querySelector('.ngx-radiant')).toBeTruthy();
-    expect(compiled.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 3');
+    expect(document.querySelector('.ngx-radiant')).toBeTruthy();
+    expect(document.querySelector('.ngx-radiant__counter')?.textContent).toContain('1 / 3');
   });
 });

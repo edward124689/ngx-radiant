@@ -1,16 +1,13 @@
-import { ChangeDetectorRef, Component, OnDestroy, afterNextRender, signal } from '@angular/core';
-import { NgxRadiantItem, NgxRadiantLightbox } from 'ngx-radiant';
+import { Component } from '@angular/core';
+import { NgxRadiantDirective, NgxRadiantItem } from 'ngx-radiant';
 
 @Component({
   selector: 'app-root',
-  imports: [NgxRadiantLightbox],
+  imports: [NgxRadiantDirective],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App implements OnDestroy {
-  protected readonly isOpen = signal(false);
-  protected readonly activeIndex = signal(0);
-
+export class App {
   protected readonly galleryItems: NgxRadiantItem[] = [
     {
       src: 'demo-art/aurora-landscape.png',
@@ -31,37 +28,4 @@ export class App implements OnDestroy {
       caption: 'Bioluminescent Coast — responsive overlay designed for Angular apps.',
     },
   ];
-
-  private removeDocumentClickListener = () => undefined;
-
-  constructor(private readonly changeDetectorRef: ChangeDetectorRef) {
-    this.removeDocumentClickListener = () => undefined;
-
-    afterNextRender(() => {
-      const handleClick = (event: MouseEvent) => {
-        const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-demo-open-index]');
-        if (!trigger) {
-          return;
-        }
-
-        const index = Number(trigger.dataset['demoOpenIndex'] ?? 0);
-        this.openGallery(Number.isFinite(index) ? index : 0);
-      };
-
-      document.addEventListener('click', handleClick);
-      this.removeDocumentClickListener = () => {
-        document.removeEventListener('click', handleClick);
-      };
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.removeDocumentClickListener();
-  }
-
-  protected openGallery(index: number): void {
-    this.activeIndex.set(index);
-    this.isOpen.set(true);
-    this.changeDetectorRef.detectChanges();
-  }
 }
