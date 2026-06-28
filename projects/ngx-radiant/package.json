@@ -1,14 +1,26 @@
 {
   "name": "ngx-radiant",
   "version": "21.0.0",
-  "description": "A modern Angular 21+ lightbox library for image galleries and media previews.",
+  "description": "Angular 21+ lightbox gallery library with directive triggers, image zoom, thumbnails, captions, video, and iframe/YouTube embeds.",
   "keywords": [
     "angular",
     "angular-21-plus",
+    "angular-library",
+    "angular-lightbox",
+    "ngx-lightbox",
     "lightbox",
+    "image-lightbox",
+    "image-gallery",
     "gallery",
     "modal",
-    "fancybox"
+    "fancybox",
+    "zoom",
+    "thumbnails",
+    "iframe",
+    "youtube",
+    "video",
+    "directive",
+    "standalone-components"
   ],
   "author": "Edward",
   "license": "MIT",
@@ -19,7 +31,7 @@
   "bugs": {
     "url": "https://github.com/edward124689/ngx-radiant/issues"
   },
-  "homepage": "https://github.com/edward124689/ngx-radiant#readme",
+  "homepage": "https://edward124689.github.io/ngx-radiant/",
   "peerDependencies": {
     "@angular/common": ">=21.0.0",
     "@angular/core": ">=21.0.0"
