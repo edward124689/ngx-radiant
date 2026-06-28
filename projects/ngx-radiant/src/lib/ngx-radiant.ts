@@ -2,12 +2,14 @@ import { NgClass } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   effect,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
@@ -144,6 +146,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
               }
               @default {
                 <img
+                  #zoomMedia
                   class="ngx-radiant__media"
                   [style.transform]="zoomTransform()"
                   [class.ngx-radiant__media--zoomed]="zoomLevel() > 1"
@@ -501,6 +504,7 @@ export class NgxRadiantLightbox {
   readonly closed = output<void>();
 
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly zoomMedia = viewChild<ElementRef<HTMLElement>>('zoomMedia');
   protected readonly zoomLevel = signal(1);
   protected readonly panX = signal(0);
   protected readonly panY = signal(0);
@@ -740,7 +744,7 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    const media = document.querySelector('.ngx-radiant__media') as HTMLElement | null;
+    const media = this.zoomMedia()?.nativeElement;
     if (!media) {
       return;
     }

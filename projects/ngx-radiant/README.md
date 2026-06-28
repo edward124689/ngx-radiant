@@ -144,7 +144,7 @@ readonly mediaItems: NgxRadiantItem[] = [
 | `maxZoom` | `number` | `3` | Maximum image zoom level. Overrides `config.maxZoom`. |
 | `zoomStep` | `number` | `0.25` | Amount changed by each zoom in/out action. Overrides `config.zoomStep`. |
 | `showZoomSlider` | `boolean` | `false` | Render a range slider for direct zoom control. Overrides `config.showZoomSlider`. |
-| `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe/video embeds. Overrides `config.iframeAspectRatio`. |
+| `iframeAspectRatio` | `string` | `'16 / 9'` | CSS aspect-ratio for iframe embeds. Overrides `config.iframeAspectRatio`. |
 | `iframeAutoplay` | `boolean` | `false` | Appends `autoplay=1` to iframe URLs. Overrides `config.iframeAutoplay`. |
 | `iframeMuted` | `boolean` | `false` | Appends `mute=1&muted=1` to iframe URLs for autoplay-friendly embeds. Overrides `config.iframeMuted`. |
 
