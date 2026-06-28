@@ -1,5 +1,9 @@
 # ngx-radiant
 
+[![npm version](https://img.shields.io/npm/v/ngx-radiant.svg)](https://www.npmjs.com/package/ngx-radiant)
+[![npm downloads](https://img.shields.io/npm/dm/ngx-radiant.svg)](https://www.npmjs.com/package/ngx-radiant)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/edward124689/ngx-radiant/blob/main/LICENSE)
+
 A modern Angular 21+ lightbox library for image galleries and media previews.
 
 ## Demo
