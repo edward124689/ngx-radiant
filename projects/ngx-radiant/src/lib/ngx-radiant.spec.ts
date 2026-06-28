@@ -302,6 +302,34 @@ describe('NgxRadiantLightbox', () => {
     expect(openedUrl).toBe('/assets/export-photo.jpg');
   });
 
+
+  it('hides and ignores download/open-original actions for unsafe URL protocols', () => {
+    fixture.componentRef.setInput('items', [{ src: 'javascript:alert(1)', type: 'iframe', alt: 'Unsafe' }]);
+    fixture.componentRef.setInput('config', { showDownload: true, showOpenOriginal: true });
+    fixture.detectChanges();
+
+    const originalOpen = window.open;
+    let opened = false;
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: () => {
+        opened = true;
+        return null;
+      },
+    });
+
+    try {
+      expect(fixture.nativeElement.querySelector('[aria-label="Download current item"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[aria-label="Open original in new tab"]')).toBeNull();
+      component.downloadCurrent();
+      component.openOriginal();
+    } finally {
+      Object.defineProperty(window, 'open', { configurable: true, value: originalOpen });
+    }
+
+    expect(opened).toBe(false);
+  });
+
   it('calls the Fullscreen API when fullscreen is enabled', () => {
     let requested = 0;
     const originalDocumentFullscreen = document.documentElement.requestFullscreen;
@@ -328,7 +356,7 @@ describe('NgxRadiantLightbox', () => {
     expect(requested).toBe(1);
   });
 
-  it('traps keyboard focus inside the toolbar', () => {
+  it('traps keyboard focus inside the toolbar from edge and shell focus states', () => {
     fixture.componentRef.setInput('config', { showDownload: true, showOpenOriginal: true });
     fixture.detectChanges();
 
@@ -340,9 +368,17 @@ describe('NgxRadiantLightbox', () => {
 
     const first = buttons[0];
     const last = buttons[buttons.length - 1];
+
+    shell.focus();
+    shell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(first);
+
+    shell.focus();
+    shell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(last);
+
     last.focus();
     shell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
-
     expect(document.activeElement).toBe(first);
   });
 

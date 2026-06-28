@@ -2,6 +2,7 @@ import { DOCUMENT, NgClass } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   effect,
@@ -591,6 +592,7 @@ export class NgxRadiantLightbox {
 
   private readonly sanitizer = inject(DomSanitizer);
   private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly zoomMedia = viewChild<ElementRef<HTMLElement>>('zoomMedia');
   private readonly shell = viewChild<ElementRef<HTMLElement>>('shell');
   protected readonly zoomLevel = signal(1);
@@ -605,7 +607,7 @@ export class NgxRadiantLightbox {
   private lastTap: { time: number; x: number; y: number } | null = null;
   private readonly preloadedImages = new Set<string>();
   private previousFocus: HTMLElement | null = null;
-  private fullscreenListenerAttached = false;
+  private fullscreenChangeHandler: (() => void) | null = null;
 
   private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
     const config = this.config() ?? {};
@@ -677,15 +679,17 @@ export class NgxRadiantLightbox {
     this.fullscreenSupported(),
   );
   protected readonly canDownload = computed(() =>
-    this.toolbarActionEnabled('download') && this.resolvedConfig().showDownload && this.hasCurrentSource(),
+    this.toolbarActionEnabled('download') && this.resolvedConfig().showDownload && this.safeActionUrl(this.currentItem().src) !== null,
   );
   protected readonly canOpenOriginal = computed(() =>
-    this.toolbarActionEnabled('openOriginal') && this.resolvedConfig().showOpenOriginal && this.hasCurrentSource(),
+    this.toolbarActionEnabled('openOriginal') && this.resolvedConfig().showOpenOriginal && this.safeActionUrl(this.currentItem().src) !== null,
   );
   protected readonly mainImageLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'eager' : null));
   protected readonly thumbnailLoading = computed(() => (this.resolvedConfig().lazyLoad ? 'lazy' : 'eager'));
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.detachFullscreenListener());
+
     effect(() => {
       this.open();
       this.currentIndex();
@@ -801,9 +805,14 @@ export class NgxRadiantLightbox {
       return;
     }
 
+    const actionUrl = this.safeActionUrl(this.currentItem().src);
+    if (!actionUrl) {
+      return;
+    }
+
     const anchor = this.document.createElement('a');
-    anchor.href = this.currentItem().src;
-    anchor.download = this.currentItem().downloadName ?? this.filenameFromSource(this.currentItem().src);
+    anchor.href = actionUrl;
+    anchor.download = this.currentItem().downloadName ?? this.filenameFromSource(actionUrl);
     anchor.rel = 'noopener noreferrer';
     this.document.body.appendChild(anchor);
     anchor.click();
@@ -815,7 +824,12 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.document.defaultView?.open(this.currentItem().src, '_blank', 'noopener,noreferrer');
+    const actionUrl = this.safeActionUrl(this.currentItem().src);
+    if (!actionUrl) {
+      return;
+    }
+
+    this.document.defaultView?.open(actionUrl, '_blank', 'noopener,noreferrer');
   }
 
   startPan(event: PointerEvent): void {
@@ -1015,23 +1029,28 @@ export class NgxRadiantLightbox {
     return this.resolvedConfig().toolbarActions.includes(action);
   }
 
-  private hasCurrentSource(): boolean {
-    return this.currentItem().src.length > 0;
-  }
-
   private fullscreenSupported(): boolean {
     return typeof this.document.documentElement.requestFullscreen === 'function';
   }
 
   private attachFullscreenListener(): void {
-    if (this.fullscreenListenerAttached || typeof this.document.addEventListener !== 'function') {
+    if (this.fullscreenChangeHandler || typeof this.document.addEventListener !== 'function') {
       return;
     }
 
-    this.fullscreenListenerAttached = true;
-    this.document.addEventListener('fullscreenchange', () => {
+    this.fullscreenChangeHandler = () => {
       this.isFullscreen.set(this.document.fullscreenElement === this.shell()?.nativeElement);
-    });
+    };
+    this.document.addEventListener('fullscreenchange', this.fullscreenChangeHandler);
+  }
+
+  private detachFullscreenListener(): void {
+    if (!this.fullscreenChangeHandler || typeof this.document.removeEventListener !== 'function') {
+      return;
+    }
+
+    this.document.removeEventListener('fullscreenchange', this.fullscreenChangeHandler);
+    this.fullscreenChangeHandler = null;
   }
 
   private exitFullscreen(): void {
@@ -1046,7 +1065,11 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    if (!this.previousFocus && this.document.activeElement instanceof HTMLElement) {
+    if (
+      !this.previousFocus &&
+      typeof HTMLElement !== 'undefined' &&
+      this.document.activeElement instanceof HTMLElement
+    ) {
       this.previousFocus = this.document.activeElement;
     }
 
@@ -1087,12 +1110,35 @@ export class NgxRadiantLightbox {
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     const active = this.document.activeElement;
+    if (active === shell || !shell.contains(active)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+      return;
+    }
+
     if (event.shiftKey && active === first) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && active === last) {
       event.preventDefault();
       first.focus();
+    }
+  }
+
+  private safeActionUrl(source: string): string | null {
+    if (!source) {
+      return null;
+    }
+
+    try {
+      const url = new URL(source, this.getBaseHref());
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return null;
+      }
+
+      return this.isRelativeUrl(source) ? `${url.pathname}${url.search}${url.hash}` : url.toString();
+    } catch {
+      return null;
     }
   }
 

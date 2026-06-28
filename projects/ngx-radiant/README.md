@@ -146,7 +146,7 @@ readonly mediaItems: NgxRadiantItem[] = [
 
 ## Toolbar actions
 
-Use `toolbarActions` to choose which built-in controls appear and in what order. Enable optional actions with the matching config flag.
+Use `toolbarActions` to choose which built-in controls are visible. Enable optional actions with the matching config flag.
 
 ```ts
 const config: NgxRadiantConfig = {
@@ -166,6 +166,8 @@ const items: NgxRadiantItem[] = [
 ```
 
 The dialog traps keyboard focus while open and restores focus to the trigger when it closes by default.
+
+Download and open-original actions only run for relative URLs or `http:`/`https:` URLs. Other protocols are ignored for safer defaults.
 
 ## API
 
@@ -196,7 +198,7 @@ The dialog traps keyboard focus while open and restores focus to the trigger whe
 | `lazyLoad` | `boolean` | `true` | Lazy-load thumbnails and mark the active image as eager. Overrides `config.lazyLoad`. |
 | `preloadImages` | `boolean` | `true` | Preload nearby image items for faster navigation. Overrides `config.preloadImages`. |
 | `preloadRadius` | `number` | `1` | Number of previous/next image items to preload. Overrides `config.preloadRadius`. |
-| `toolbarActions` | `NgxRadiantToolbarAction[]` | built-in action list | Choose toolbar actions and order. Overrides `config.toolbarActions`. |
+| `toolbarActions` | `NgxRadiantToolbarAction[]` | built-in action list | Choose which toolbar actions are visible. Overrides `config.toolbarActions`. |
 | `fullscreen` | `boolean` | `true` | Enable Fullscreen API support. Overrides `config.fullscreen`. |
 | `showFullscreenButton` | `boolean` | `true` | Render the fullscreen toolbar action when supported. Overrides `config.showFullscreenButton`. |
 | `showDownload` | `boolean` | `false` | Render the download toolbar action. Overrides `config.showDownload`. |
