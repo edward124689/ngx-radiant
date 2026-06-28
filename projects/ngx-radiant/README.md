@@ -41,7 +41,8 @@ export class GalleryComponent {
   readonly activeIndex = signal(0);
   readonly config: NgxRadiantConfig = {
     zoomStep: 0.5,
-    maxZoom: 3,
+    maxZoom: 8,
+    showZoomSlider: true,
     showThumbnails: true,
   };
 
@@ -83,6 +84,8 @@ export class GalleryComponent {
 }
 ```
 
+Images can zoom beyond the fitted viewport. When zoomed in, users can drag the image to inspect details.
+
 Single-image shorthand automatically hides the counter and previous/next controls:
 
 ```html
@@ -102,7 +105,7 @@ Iframe / YouTube example:
 ```ts
 readonly mediaItems: NgxRadiantItem[] = [
   {
-    src: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
     type: 'iframe',
     caption: 'YouTube embed',
   },
@@ -140,6 +143,7 @@ readonly mediaItems: NgxRadiantItem[] = [
 | `minZoom` | `number` | `1` | Minimum image zoom level. Overrides `config.minZoom`. |
 | `maxZoom` | `number` | `3` | Maximum image zoom level. Overrides `config.maxZoom`. |
 | `zoomStep` | `number` | `0.25` | Amount changed by each zoom in/out action. Overrides `config.zoomStep`. |
+| `showZoomSlider` | `boolean` | `false` | Render a range slider for direct zoom control. Overrides `config.showZoomSlider`. |
 
 ### `NgxRadiantDirective`
 
@@ -173,6 +177,7 @@ interface NgxRadiantConfig {
   minZoom?: number;
   maxZoom?: number;
   zoomStep?: number;
+  showZoomSlider?: boolean;
 }
 ```
 

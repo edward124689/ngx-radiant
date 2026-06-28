@@ -11,13 +11,13 @@ export class App {
   protected readonly singleImage = 'demo-art/aurora-landscape.png';
   protected readonly compactConfig: NgxRadiantConfig = {
     zoomStep: 0.5,
-    maxZoom: 2.5,
+    maxZoom: 8,
     showThumbnails: true,
   };
 
   protected readonly iframeItems: NgxRadiantItem[] = [
     {
-      src: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
       type: 'iframe',
       caption: 'Iframe support — YouTube embeds render inside the same Radiant overlay.',
       thumb: 'demo-art/canyon-prism.png',

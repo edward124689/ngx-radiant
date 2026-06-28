@@ -33,6 +33,7 @@ export interface NgxRadiantConfig {
   minZoom?: number;
   maxZoom?: number;
   zoomStep?: number;
+  showZoomSlider?: boolean;
 }
 
 const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
@@ -47,6 +48,7 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
   minZoom: 1,
   maxZoom: 3,
   zoomStep: 0.25,
+  showZoomSlider: false,
 };
 
 @Component({
@@ -84,6 +86,21 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                     {{ zoomPercent() }}%
                   </button>
                   <button type="button" class="ngx-radiant__button" aria-label="Zoom in" (click)="zoomIn()">+</button>
+                  @if (showZoomSliderControl()) {
+                    <label class="ngx-radiant__zoom-slider-label">
+                      <span>Zoom</span>
+                      <input
+                        class="ngx-radiant__zoom-slider"
+                        type="range"
+                        [min]="resolvedMinZoom()"
+                        [max]="resolvedMaxZoom()"
+                        [step]="resolvedZoomStep()"
+                        [value]="zoomLevel()"
+                        aria-label="Zoom level"
+                        (input)="setZoomFromInput($event)"
+                      />
+                    </label>
+                  }
                 </div>
               }
 
@@ -123,10 +140,16 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
                   class="ngx-radiant__media"
                   [style.transform]="zoomTransform()"
                   [class.ngx-radiant__media--zoomed]="zoomLevel() > 1"
+                  [class.ngx-radiant__media--dragging]="dragging()"
                   [src]="currentItem().src"
                   [alt]="currentItem().alt ?? currentItem().caption ?? ''"
                   draggable="false"
                   (dblclick)="toggleZoom()"
+                  (pointerdown)="startPan($event)"
+                  (pointermove)="movePan($event)"
+                  (pointerup)="endPan($event)"
+                  (pointercancel)="endPan($event)"
+                  (lostpointercapture)="endPan($event)"
                 />
               }
             }
@@ -217,6 +240,30 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .ngx-radiant__zoom-slider-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid rgb(255 255 255 / 18%);
+      border-radius: 999px;
+      background: rgb(15 23 42 / 72%);
+      padding: 0.35rem 0.65rem;
+      box-shadow: 0 18px 50px rgb(0 0 0 / 28%);
+      backdrop-filter: blur(14px);
+    }
+
+    .ngx-radiant__zoom-slider-label span {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ngx-radiant__zoom-slider {
+      width: min(22vw, 12rem);
+      accent-color: var(--ngx-radiant-accent, #67e8f9);
     }
 
     .ngx-radiant__toolbar-start {
@@ -312,7 +359,14 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
     }
 
     .ngx-radiant__media--zoomed {
-      cursor: zoom-out;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .ngx-radiant__media--dragging {
+      cursor: grabbing;
+      transition: none;
     }
 
     .ngx-radiant__frame {
@@ -379,9 +433,14 @@ const NGX_RADIANT_DEFAULT_CONFIG: Required<NgxRadiantConfig> = {
         align-items: flex-start;
       }
 
-      .ngx-radiant__toolbar-actions {
+      .ngx-radiant__toolbar-actions,
+      .ngx-radiant__zoom-controls {
         flex-wrap: wrap;
         justify-content: flex-end;
+      }
+
+      .ngx-radiant__zoom-slider {
+        width: 8rem;
       }
 
       .ngx-radiant__stage {
@@ -421,6 +480,7 @@ export class NgxRadiantLightbox {
   readonly minZoom = input<number | undefined>(undefined);
   readonly maxZoom = input<number | undefined>(undefined);
   readonly zoomStep = input<number | undefined>(undefined);
+  readonly showZoomSlider = input<boolean | undefined>(undefined);
 
   readonly open = input(false);
   readonly index = input(0);
@@ -431,6 +491,10 @@ export class NgxRadiantLightbox {
 
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly zoomLevel = signal(1);
+  protected readonly panX = signal(0);
+  protected readonly panY = signal(0);
+  protected readonly dragging = signal(false);
+  private dragStart: { pointerId: number; x: number; y: number; panX: number; panY: number } | null = null;
 
   private readonly resolvedConfig = computed<Required<NgxRadiantConfig>>(() => {
     const config = this.config() ?? {};
@@ -448,6 +512,7 @@ export class NgxRadiantLightbox {
       minZoom: this.minZoom() ?? config.minZoom ?? NGX_RADIANT_DEFAULT_CONFIG.minZoom,
       maxZoom: this.maxZoom() ?? config.maxZoom ?? NGX_RADIANT_DEFAULT_CONFIG.maxZoom,
       zoomStep: this.zoomStep() ?? config.zoomStep ?? NGX_RADIANT_DEFAULT_CONFIG.zoomStep,
+      showZoomSlider: this.showZoomSlider() ?? config.showZoomSlider ?? NGX_RADIANT_DEFAULT_CONFIG.showZoomSlider,
     };
   });
 
@@ -458,7 +523,10 @@ export class NgxRadiantLightbox {
     () => this.resolvedConfig().zoomable && (this.currentItem().type ?? 'image') === 'image',
   );
   protected readonly zoomPercent = computed(() => Math.round(this.zoomLevel() * 100));
-  protected readonly zoomTransform = computed(() => `scale(${this.zoomLevel()})`);
+  protected readonly zoomTransform = computed(() => `translate(${this.panX()}px, ${this.panY()}px) scale(${this.zoomLevel()})`);
+  protected readonly resolvedMinZoom = computed(() => Math.max(this.resolvedConfig().minZoom, 0.1));
+  protected readonly resolvedMaxZoom = computed(() => Math.max(this.resolvedConfig().maxZoom, this.resolvedMinZoom()));
+  protected readonly resolvedZoomStep = computed(() => Math.max(this.resolvedConfig().zoomStep, 0.01));
   protected readonly trustedFrameSrc = computed<SafeResourceUrl>(() =>
     this.sanitizer.bypassSecurityTrustResourceUrl(this.currentItem().src),
   );
@@ -466,6 +534,7 @@ export class NgxRadiantLightbox {
   protected readonly resolvedShowThumbnails = computed(() => this.resolvedConfig().showThumbnails);
   protected readonly showCounterControl = computed(() => this.resolvedConfig().showCounter);
   protected readonly showNavigationControl = computed(() => this.resolvedConfig().showNavigation);
+  protected readonly showZoomSliderControl = computed(() => this.resolvedConfig().showZoomSlider);
 
   constructor() {
     effect(() => {
@@ -474,6 +543,7 @@ export class NgxRadiantLightbox {
       this.currentItem().src;
       const config = this.resolvedConfig();
       this.zoomLevel.set(this.clampZoom(config.initialZoom));
+      this.resetPan();
     });
   }
 
@@ -517,7 +587,7 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.zoomLevel.update((zoom) => this.clampZoom(zoom + this.resolvedConfig().zoomStep));
+    this.zoomLevel.update((zoom) => this.clampZoom(zoom + this.resolvedZoomStep()));
   }
 
   zoomOut(): void {
@@ -525,11 +595,25 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.zoomLevel.update((zoom) => this.clampZoom(zoom - this.resolvedConfig().zoomStep));
+    this.zoomLevel.update((zoom) => this.clampZoom(zoom - this.resolvedZoomStep()));
   }
 
   resetZoom(): void {
     this.zoomLevel.set(this.clampZoom(this.resolvedConfig().initialZoom));
+    this.resetPan();
+  }
+
+  setZoomFromInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.setZoom(Number(input.value));
+  }
+
+  setZoom(zoom: number): void {
+    const nextZoom = this.clampZoom(zoom);
+    this.zoomLevel.set(nextZoom);
+    if (nextZoom <= this.resolvedMinZoom()) {
+      this.resetPan();
+    }
   }
 
   toggleZoom(): void {
@@ -537,7 +621,41 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.zoomLevel.set(this.zoomLevel() > this.resolvedConfig().minZoom ? this.resolvedConfig().minZoom : this.resolvedConfig().maxZoom);
+    this.setZoom(this.zoomLevel() > this.resolvedMinZoom() ? this.resolvedMinZoom() : this.resolvedMaxZoom());
+  }
+
+  startPan(event: PointerEvent): void {
+    if (!this.canPan()) {
+      return;
+    }
+
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.dragStart = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      panX: this.panX(),
+      panY: this.panY(),
+    };
+    this.dragging.set(true);
+  }
+
+  movePan(event: PointerEvent): void {
+    if (!this.dragStart || this.dragStart.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    this.panX.set(this.dragStart.panX + event.clientX - this.dragStart.x);
+    this.panY.set(this.dragStart.panY + event.clientY - this.dragStart.y);
+  }
+
+  endPan(event: PointerEvent): void {
+    if (this.dragStart?.pointerId === event.pointerId) {
+      this.dragStart = null;
+      this.dragging.set(false);
+    }
   }
 
   handleKeydown(event: KeyboardEvent): void {
@@ -587,9 +705,19 @@ export class NgxRadiantLightbox {
   }
 
   private clampZoom(zoom: number): number {
-    const config = this.resolvedConfig();
-    const minZoom = Math.max(config.minZoom, 0.1);
-    const maxZoom = Math.max(config.maxZoom, minZoom);
-    return Math.min(Math.max(Number.isFinite(zoom) ? zoom : config.initialZoom, minZoom), maxZoom);
+    const minZoom = this.resolvedMinZoom();
+    const maxZoom = this.resolvedMaxZoom();
+    return Math.min(Math.max(Number.isFinite(zoom) ? zoom : this.resolvedConfig().initialZoom, minZoom), maxZoom);
+  }
+
+  private canPan(): boolean {
+    return this.canZoom() && this.zoomLevel() > this.resolvedMinZoom();
+  }
+
+  private resetPan(): void {
+    this.panX.set(0);
+    this.panY.set(0);
+    this.dragStart = null;
+    this.dragging.set(false);
   }
 }

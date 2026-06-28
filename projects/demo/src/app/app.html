@@ -142,13 +142,13 @@
         type="button"
         class="media-demo-card"
         [ngxRadiant]="singleImage"
-        [radiantConfig]="{ zoomStep: 0.5, maxZoom: 3, showCounter: false }"
+        [radiantConfig]="{ zoomStep: 0.25, maxZoom: 8, showCounter: false, showZoomSlider: true }"
         radiantAlt="Aurora lights reflected over an alpine mountain lake"
-        radiantCaption="Zoom controls — use +, −, 0, or double-click the image."
+        radiantCaption="Zoom controls — use +, −, slider, drag when zoomed, or double-click the image."
         aria-label="Open zoomable image demo"
       >
         <span>Zoom image</span>
-        <strong>+, −, 0 keyboard shortcuts</strong>
+        <strong>Slider zoom + drag panning</strong>
       </button>
 
       <button

@@ -84,14 +84,48 @@ describe('NgxRadiantLightbox', () => {
     fixture.detectChanges();
 
     let image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
-    expect(image.style.transform).toBe('scale(1.5)');
+    expect(image.style.transform).toBe('translate(0px, 0px) scale(1.5)');
 
     const zoomOut = fixture.nativeElement.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
     zoomOut.click();
     fixture.detectChanges();
 
     image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
-    expect(image.style.transform).toBe('scale(1)');
+    expect(image.style.transform).toBe('translate(0px, 0px) scale(1)');
+  });
+
+
+  it('supports an optional zoom slider', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('config', { showZoomSlider: true, minZoom: 1, maxZoom: 8, zoomStep: 0.5 });
+    fixture.detectChanges();
+
+    const slider = fixture.nativeElement.querySelector('.ngx-radiant__zoom-slider') as HTMLInputElement;
+    slider.value = '4';
+    slider.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(slider.getAttribute('max')).toBe('8');
+    expect(image.style.transform).toBe('translate(0px, 0px) scale(4)');
+  });
+
+  it('allows dragging a zoomed image', () => {
+    fixture.componentRef.setInput('items', [{ src: '/assets/single.jpg', alt: 'Single' }]);
+    fixture.componentRef.setInput('config', { maxZoom: 8 });
+    fixture.detectChanges();
+
+    component.setZoom(3);
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    image.setPointerCapture = () => undefined;
+    image.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, clientX: 10, clientY: 20, bubbles: true }));
+    image.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, clientX: 40, clientY: 55, bubbles: true }));
+    image.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, clientX: 40, clientY: 55, bubbles: true }));
+    fixture.detectChanges();
+
+    expect(image.style.transform).toBe('translate(30px, 35px) scale(3)');
   });
 
   it('supports config-driven UI options', () => {
@@ -114,7 +148,7 @@ describe('NgxRadiantLightbox', () => {
   it('renders iframe items with an embed frame', () => {
     fixture.componentRef.setInput('items', [
       {
-        src: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        src: 'https://www.youtube.com/embed/jYqX4YUzcKs',
         type: 'iframe',
         caption: 'YouTube embed',
       },
