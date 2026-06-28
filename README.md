@@ -10,9 +10,7 @@ Ngx Radiant is an Angular 21+ lightbox and image gallery library for polished me
 
 The GitHub Pages demo is deployed from `main` by GitHub Actions:
 
-```text
-https://edward124689.github.io/ngx-radiant/
-```
+[Open the live demo](https://edward124689.github.io/ngx-radiant/)
 
 Local demo commands:
 

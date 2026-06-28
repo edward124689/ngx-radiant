@@ -12,9 +12,7 @@ Ngx Radiant enables swipe navigation, pinch zoom, double-tap zoom, lazy thumbnai
 
 ## Demo
 
-```text
-https://edward124689.github.io/ngx-radiant/
-```
+[Open the live demo](https://edward124689.github.io/ngx-radiant/)
 
 ## Install
 
