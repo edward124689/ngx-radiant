@@ -1312,7 +1312,7 @@ export class NgxRadiantLightbox {
   }
 
   private getBaseHref(): string {
-    return typeof globalThis.location !== 'undefined' ? globalThis.location.origin : 'http://localhost';
+    return this.document.baseURI || (typeof globalThis.location !== 'undefined' ? globalThis.location.href : 'http://localhost/');
   }
 
   private isRelativeUrl(url: string): boolean {

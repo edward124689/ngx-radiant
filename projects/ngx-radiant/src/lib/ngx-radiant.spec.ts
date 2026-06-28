@@ -330,6 +330,46 @@ describe('NgxRadiantLightbox', () => {
     expect(opened).toBe(false);
   });
 
+  it('resolves relative download/open-original URLs against the document base URI', () => {
+    const base = document.createElement('base');
+    base.href = 'https://example.test/ngx-radiant/';
+    document.head.appendChild(base);
+
+    fixture.componentRef.setInput('items', [
+      { src: 'demo-art/export-photo.jpg', alt: 'Export photo' },
+    ]);
+    fixture.componentRef.setInput('config', { showDownload: true, showOpenOriginal: true });
+    fixture.detectChanges();
+
+    const clickedDownloads: Array<{ href: string; download: string }> = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function click() {
+      clickedDownloads.push({ href: this.getAttribute('href') ?? '', download: this.getAttribute('download') ?? '' });
+    };
+
+    const originalOpen = window.open;
+    let openedUrl = '';
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: (url?: string | URL) => {
+        openedUrl = String(url ?? '');
+        return null;
+      },
+    });
+
+    try {
+      component.downloadCurrent();
+      component.openOriginal();
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+      Object.defineProperty(window, 'open', { configurable: true, value: originalOpen });
+      base.remove();
+    }
+
+    expect(clickedDownloads).toEqual([{ href: '/ngx-radiant/demo-art/export-photo.jpg', download: 'export-photo.jpg' }]);
+    expect(openedUrl).toBe('/ngx-radiant/demo-art/export-photo.jpg');
+  });
+
   it('calls the Fullscreen API when fullscreen is enabled', () => {
     let requested = 0;
     const originalDocumentFullscreen = document.documentElement.requestFullscreen;
