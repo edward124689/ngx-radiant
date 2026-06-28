@@ -34,24 +34,33 @@ describe('NgxRadiantLightbox', () => {
     expect(caption.textContent?.trim()).toBe('First caption');
   });
 
-  it('supports next and previous navigation', () => {
+  it('emits index changes for next and previous navigation', () => {
+    const emittedIndexes: number[] = [];
+    component.indexChange.subscribe((index) => emittedIndexes.push(index));
+
     component.next();
+    fixture.componentRef.setInput('index', emittedIndexes.at(-1));
     fixture.detectChanges();
 
     let image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(emittedIndexes.at(-1)).toBe(1);
     expect(image.getAttribute('src')).toBe('/assets/photo-2.jpg');
 
     component.previous();
+    fixture.componentRef.setInput('index', emittedIndexes.at(-1));
     fixture.detectChanges();
 
     image = fixture.nativeElement.querySelector('.ngx-radiant__media') as HTMLImageElement;
+    expect(emittedIndexes.at(-1)).toBe(0);
     expect(image.getAttribute('src')).toBe('/assets/photo-1.jpg');
   });
 
-  it('closes on Escape when enabled', () => {
-    component.handleKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
-    fixture.detectChanges();
+  it('emits close changes on Escape when enabled', () => {
+    const emittedOpenStates: boolean[] = [];
+    component.openChange.subscribe((open) => emittedOpenStates.push(open));
 
-    expect(fixture.nativeElement.querySelector('.ngx-radiant')).toBeNull();
+    component.handleKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(emittedOpenStates).toEqual([false]);
   });
 });

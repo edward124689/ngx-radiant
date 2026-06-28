@@ -1,13 +1,5 @@
 import { NgClass } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  input,
-  model,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 export type NgxRadiantItemType = 'image' | 'video' | 'iframe';
 
@@ -318,31 +310,20 @@ export class NgxRadiantLightbox {
   readonly loop = input(true);
   readonly showThumbnails = input(true);
 
-  readonly open = model(false);
-  readonly index = model(0);
+  readonly open = input(false);
+  readonly index = input(0);
 
+  readonly openChange = output<boolean>();
+  readonly indexChange = output<number>();
   readonly closed = output<void>();
 
   protected readonly currentIndex = computed(() => this.normalizeIndex(this.index()));
   protected readonly currentItem = computed(() => this.items()[this.currentIndex()]);
   protected readonly canNavigate = computed(() => this.items().length > 1);
 
-  constructor() {
-    effect(() => {
-      const normalized = this.normalizeIndex(this.index());
-      if (normalized !== this.index()) {
-        this.index.set(normalized);
-      }
-
-      if (this.open() && this.items().length === 0) {
-        this.open.set(false);
-      }
-    });
-  }
-
   openAt(index: number): void {
-    this.index.set(this.normalizeIndex(index));
-    this.open.set(this.items().length > 0);
+    this.indexChange.emit(this.normalizeIndex(index));
+    this.openChange.emit(this.items().length > 0);
   }
 
   close(): void {
@@ -350,7 +331,7 @@ export class NgxRadiantLightbox {
       return;
     }
 
-    this.open.set(false);
+    this.openChange.emit(false);
     this.closed.emit();
   }
 
@@ -368,12 +349,11 @@ export class NgxRadiantLightbox {
     }
 
     const itemCount = this.items().length;
-    if (this.loop()) {
-      this.index.set((index + itemCount) % itemCount);
-      return;
-    }
+    const nextIndex = this.loop()
+      ? (index + itemCount) % itemCount
+      : Math.min(Math.max(index, 0), itemCount - 1);
 
-    this.index.set(Math.min(Math.max(index, 0), itemCount - 1));
+    this.indexChange.emit(nextIndex);
   }
 
   handleKeydown(event: KeyboardEvent): void {

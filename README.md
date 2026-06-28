@@ -2,6 +2,21 @@
 
 Ngx Radiant is a modern Angular 21 lightbox library for polished image galleries and media previews. The goal is to offer a lightweight, Angular-native alternative inspired by Fancybox-style gallery experiences.
 
+## Demo
+
+The GitHub Pages demo is deployed from `main` by GitHub Actions:
+
+```text
+https://edward124689.github.io/ngx-radiant/
+```
+
+Local demo commands:
+
+```bash
+npm start
+npm run build:pages
+```
+
 ## Status
 
 Early project scaffold. The first public API exposes a standalone lightbox component with:
@@ -10,15 +25,16 @@ Early project scaffold. The first public API exposes a standalone lightbox compo
 - Image and video item rendering
 - Captions, counters, thumbnails, backdrop close
 - Keyboard navigation: `Escape`, `ArrowLeft`, `ArrowRight`
-- Two-way `open` and `index` models
+- Two-way-compatible `open` / `openChange` and `index` / `indexChange` bindings
 - CSS custom properties for basic theming
 
 ## Workspace
 
 ```bash
 npm install
-npm run build
-npm test
+npm run build:lib
+npm test -- --watch=false
+npm pack --dry-run ./dist/ngx-radiant
 ```
 
 The publishable library lives in:
@@ -47,8 +63,10 @@ import { NgxRadiantItem, NgxRadiantLightbox } from 'ngx-radiant';
 
     <ngx-radiant-lightbox
       [items]="items"
-      [(open)]="isOpen"
-      [(index)]="activeIndex"
+      [open]="isOpen()"
+      (openChange)="isOpen.set($event)"
+      [index]="activeIndex()"
+      (indexChange)="activeIndex.set($event)"
     />
   `,
 })
@@ -70,11 +88,11 @@ export class GalleryComponent {
 
 ### `NgxRadiantLightbox`
 
-| Input/model | Type | Default | Description |
+| Input/output | Type | Default | Description |
 | --- | --- | --- | --- |
 | `items` | `NgxRadiantItem[]` | `[]` | Gallery items to display. |
-| `open` | `boolean` | `false` | Two-way model controlling visibility. |
-| `index` | `number` | `0` | Two-way model for the selected item. |
+| `open` / `openChange` | `boolean` | `false` | Controls visibility. |
+| `index` / `indexChange` | `number` | `0` | Controls the selected item. |
 | `ariaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. |
 | `closeOnEscape` | `boolean` | `true` | Close the lightbox when Escape is pressed. |
 | `loop` | `boolean` | `true` | Wrap navigation at the first/last item. |
@@ -104,7 +122,7 @@ interface NgxRadiantItem {
 ## Publishing checklist
 
 ```bash
-npm run build
+npm run build:lib
 cd dist/ngx-radiant
 npm publish --access public
 ```

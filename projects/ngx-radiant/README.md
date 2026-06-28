@@ -2,6 +2,12 @@
 
 A modern Angular 21 lightbox library for image galleries and media previews.
 
+## Demo
+
+```text
+https://edward124689.github.io/ngx-radiant/
+```
+
 ## Install
 
 ```bash
@@ -22,8 +28,10 @@ import { NgxRadiantItem, NgxRadiantLightbox } from 'ngx-radiant';
 
     <ngx-radiant-lightbox
       [items]="items"
-      [(open)]="isOpen"
-      [(index)]="activeIndex"
+      [open]="isOpen()"
+      (openChange)="isOpen.set($event)"
+      [index]="activeIndex()"
+      (indexChange)="activeIndex.set($event)"
     />
   `,
 })
@@ -45,11 +53,11 @@ export class GalleryComponent {
 
 ### `NgxRadiantLightbox`
 
-| Input/model | Type | Default | Description |
+| Input/output | Type | Default | Description |
 | --- | --- | --- | --- |
 | `items` | `NgxRadiantItem[]` | `[]` | Gallery items to display. |
-| `open` | `boolean` | `false` | Two-way model controlling visibility. |
-| `index` | `number` | `0` | Two-way model for the selected item. |
+| `open` / `openChange` | `boolean` | `false` | Controls visibility. |
+| `index` / `indexChange` | `number` | `0` | Controls the selected item. |
 | `ariaLabel` | `string` | `Image gallery lightbox` | Accessible dialog label. |
 | `closeOnEscape` | `boolean` | `true` | Close the lightbox when Escape is pressed. |
 | `loop` | `boolean` | `true` | Wrap navigation at the first/last item. |
@@ -70,6 +78,6 @@ interface NgxRadiantItem {
 ## Commands
 
 ```bash
-npm run build
-npm test
+npm run build:lib
+npm test -- --watch=false
 ```

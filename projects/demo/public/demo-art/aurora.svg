@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">Aurora abstract lightbox demo image</title>
+  <desc id="desc">A dark mountain horizon with radiant aurora ribbons.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#020617"/>
+      <stop offset="0.5" stop-color="#172554"/>
+      <stop offset="1" stop-color="#581c87"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="24" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="900" fill="url(#sky)"/>
+  <circle cx="920" cy="190" r="130" fill="#67e8f9" opacity="0.16" filter="url(#glow)"/>
+  <path d="M-80 360 C 160 130, 350 620, 620 300 S 1060 120, 1320 390" fill="none" stroke="#67e8f9" stroke-width="70" opacity="0.75" filter="url(#glow)"/>
+  <path d="M-60 430 C 210 210, 400 690, 680 360 S 1010 260, 1300 500" fill="none" stroke="#a78bfa" stroke-width="54" opacity="0.7" filter="url(#glow)"/>
+  <path d="M-80 500 C 260 280, 470 720, 770 440 S 1060 360, 1280 580" fill="none" stroke="#f472b6" stroke-width="38" opacity="0.52" filter="url(#glow)"/>
+  <path d="M0 750 L160 590 L300 730 L450 560 L650 740 L820 610 L1000 745 L1200 600 L1200 900 L0 900 Z" fill="#020617" opacity="0.92"/>
+  <path d="M0 790 C 240 740, 420 780, 650 755 S 970 720, 1200 770 L1200 900 L0 900 Z" fill="#0f172a" opacity="0.9"/>
+</svg>

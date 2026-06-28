@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">Orbit abstract lightbox demo image</title>
+  <desc id="desc">Glowing orbital rings around a soft radiant core.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#020617"/>
+      <stop offset="0.5" stop-color="#111827"/>
+      <stop offset="1" stop-color="#164e63"/>
+    </linearGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="0.2" stop-color="#67e8f9"/>
+      <stop offset="0.55" stop-color="#8b5cf6" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <circle cx="600" cy="450" r="260" fill="url(#core)" opacity="0.82"/>
+  <g fill="none" filter="url(#glow)">
+    <ellipse cx="600" cy="450" rx="470" ry="145" stroke="#67e8f9" stroke-width="18" opacity="0.76" transform="rotate(-16 600 450)"/>
+    <ellipse cx="600" cy="450" rx="390" ry="105" stroke="#f472b6" stroke-width="14" opacity="0.62" transform="rotate(24 600 450)"/>
+    <ellipse cx="600" cy="450" rx="300" ry="75" stroke="#a78bfa" stroke-width="10" opacity="0.7" transform="rotate(63 600 450)"/>
+  </g>
+  <circle cx="910" cy="320" r="34" fill="#67e8f9"/>
+  <circle cx="315" cy="555" r="24" fill="#f472b6"/>
+  <circle cx="720" cy="690" r="18" fill="#c4b5fd"/>
+</svg>
